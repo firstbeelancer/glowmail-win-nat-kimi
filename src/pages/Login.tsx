@@ -86,7 +86,7 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md mx-4"
       >
-        <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-8">
+        <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-glow-modal p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
             <div>
@@ -186,7 +186,7 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="block text-xs text-zinc-500 mb-1">SMTP сервер</label>
+                    <label className="block text-xs text-glow-text-secondary mb-1">SMTP сервер</label>
                     <input
                       type="text"
                       value={smtpHost}

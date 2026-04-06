@@ -82,7 +82,10 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
   }, []);
 
   return (
-    <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-glow-primary text-glow-text-primary overflow-hidden font-sans">
+      {/* Ambient background glow */}
+      <div className="ambient-glow" />
+
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -99,7 +102,7 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-              className="fixed inset-y-0 left-0 w-72 sidebar-force-dark sidebar-force-dark-surface border-r z-50 flex flex-col md:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-glow-sidebar border-r border-glow-border-subtle z-50 flex flex-col md:hidden"
             >
               <SidebarContent
                 folders={folders}
@@ -120,7 +123,13 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
       </AnimatePresence>
 
       {/* Desktop Sidebar - resizable */}
-      <aside className="hidden md:flex sidebar-force-dark sidebar-force-dark-surface border-r flex-col relative font-medium" style={{ width: sidebarWidth, minWidth: 180, maxWidth: 400 }}>
+      <aside 
+        className="hidden md:flex bg-glow-sidebar border-r border-glow-border-subtle flex-col relative"
+        style={{ width: sidebarWidth, minWidth: 180, maxWidth: 400 }}
+      >
+        {/* Ambient glow at top of sidebar */}
+        <div className="absolute top-0 left-0 right-0 h-[120px] bg-gradient-to-b from-[rgba(108,138,255,0.04)] to-transparent pointer-events-none" />
+        
         <SidebarContent
           folders={folders}
           currentFolder={currentFolder}
@@ -131,41 +140,41 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
         {/* Resize handle */}
         <div
           onMouseDown={handleMouseDown}
-          className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize group z-20 hover:bg-emerald-500/30 active:bg-emerald-500/40 transition-colors"
+          className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize group z-20 hover:bg-glow-accent/30 active:bg-glow-accent/40 transition-colors"
         />
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-16 border-b border-zinc-800/50 flex items-center px-4 gap-4 bg-zinc-950/80 backdrop-blur-md z-10 sticky top-0">
+        <header className="h-16 border-b border-glow-border-default flex items-center px-4 gap-4 bg-glow-primary/80 backdrop-blur-md z-10 sticky top-0">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 -ml-2 rounded-full hover:bg-zinc-800 md:hidden transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-glow-surface md:hidden transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
           <button
             onClick={() => fetchEmails()}
-            className="p-2 rounded-full hover:bg-zinc-800 md:hidden transition-colors"
+            className="p-2 rounded-full hover:bg-glow-surface md:hidden transition-colors"
             title={lang === 'ru' ? 'Получить письма' : 'Get mail'}
           >
-            <RefreshCw className="w-5 h-5 text-zinc-400" />
+            <RefreshCw className="w-5 h-5 text-glow-text-secondary" />
           </button>
           
           <div className="flex-1 max-w-2xl relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-glow-text-muted group-focus-within:text-glow-accent transition-colors" />
             <input
               type="text"
               placeholder={t('layout.searchPlaceholder', lang)}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-full pl-10 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all placeholder:text-zinc-600"
+              className="w-full bg-glow-input border border-glow-border-default rounded-full pl-10 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-glow-accent/50 focus:border-glow-accent/50 transition-all placeholder:text-glow-text-muted"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-700 text-zinc-500 hover:text-zinc-200 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-glow-surface text-glow-text-muted hover:text-glow-text-primary transition-colors"
                 title={lang === 'ru' ? 'Сбросить поиск' : 'Clear search'}
               >
                 <X className="w-4 h-4" />
@@ -173,8 +182,12 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
             )}
           </div>
 
-          <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-zinc-800 transition-colors" title={lang === 'ru' ? 'Настройки' : 'Settings'}>
-            <Settings className="w-5 h-5 text-[#72cbab] font-bold" />
+          <button 
+            onClick={() => setIsSettingsOpen(true)} 
+            className="p-2 rounded-full hover:bg-glow-surface transition-colors" 
+            title={lang === 'ru' ? 'Настройки' : 'Settings'}
+          >
+            <Settings className="w-5 h-5 text-glow-accent font-bold" />
           </button>
           <button
             onClick={() => {
@@ -184,19 +197,20 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
                 });
               });
             }}
-            className="p-2 rounded-full hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-full hover:bg-glow-surface transition-colors"
             title={lang === 'ru' ? 'Выйти' : 'Log out'}
           >
-            <LogOut className="w-5 h-5 text-zinc-400" />
+            <LogOut className="w-5 h-5 text-glow-text-secondary" />
           </button>
         </header>
 
+        {/* Status Banner */}
         {statusBanner && (
           <div className={cn(
             "border-b px-4 py-3 shrink-0 relative overflow-hidden",
             statusBanner.tone === 'error'
-              ? "border-red-500/25 bg-[linear-gradient(135deg,rgba(80,14,18,0.92),rgba(28,8,12,0.96))] text-red-100"
-              : "border-cyan-400/15 bg-[linear-gradient(135deg,rgba(7,15,22,0.96),rgba(8,26,31,0.96)_42%,rgba(7,14,21,0.98))] text-zinc-100",
+              ? "border-glow-error/25 bg-gradient-to-br from-[rgba(80,14,18,0.92)] to-[rgba(28,8,12,0.96)] text-red-100"
+              : "border-glow-accent/15 bg-gradient-to-br from-[rgba(14,20,35,0.96)] via-[rgba(18,26,45,0.96)] to-[rgba(14,20,35,0.98)]"
           )}>
             <div className="absolute inset-0 opacity-70 pointer-events-none" style={{
               backgroundImage: statusBanner.tone === 'error'
@@ -207,29 +221,29 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
               <div className={cn(
                 "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border backdrop-blur-md",
                 statusBanner.tone === 'error'
-                  ? "border-red-400/25 bg-red-500/10 shadow-[0_0_20px_rgba(240,72,72,0.18)]"
-                  : "border-cyan-300/15 bg-white/5 shadow-[0_0_24px_rgba(61,217,160,0.12)]"
+                  ? "border-glow-error/25 bg-glow-error/10 shadow-[0_0_20px_rgba(240,72,72,0.18)]"
+                  : "border-glow-accent/15 bg-white/5 shadow-[0_0_24px_rgba(108,138,255,0.12)]"
               )}>
-                <RefreshCw className={cn("w-4 h-4", statusBanner.tone !== 'error' && "animate-spin")} />
+                <RefreshCw className={cn("w-4 h-4", statusBanner.tone !== 'error' && "animate-spin text-glow-accent")} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold tracking-[0.01em]">{statusBanner.text}</span>
+                  <span className="text-sm font-semibold tracking-[0.01em] text-glow-text-primary">{statusBanner.text}</span>
                   {statusBanner.phase && (
                     <span className={cn(
                       "rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.22em]",
                       statusBanner.tone === 'error'
-                        ? "border-red-400/30 bg-red-500/10 text-red-200"
-                        : "border-cyan-300/15 bg-white/5 text-cyan-100"
+                        ? "border-glow-error/30 bg-glow-error/10 text-red-200"
+                        : "border-glow-accent/15 bg-white/5 text-glow-accent"
                     )}>
                       {phaseLabelMap[statusBanner.phase] || statusBanner.phase}
                     </span>
                   )}
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-zinc-300">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-glow-text-secondary">
                     {elapsedSeconds}s
                   </span>
                   {statusBanner.diagnostics?.source && (
-                    <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                    <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-glow-text-muted">
                       {statusBanner.diagnostics.source}
                     </span>
                   )}
@@ -237,7 +251,7 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
                 {statusBanner.detail && (
                   <p className={cn(
                     "mt-1 text-xs",
-                    statusBanner.tone === 'error' ? "text-red-200/80" : "text-zinc-300/85"
+                    statusBanner.tone === 'error' ? "text-red-200/80" : "text-glow-text-secondary/85"
                   )}>
                     {statusBanner.detail}
                   </p>
@@ -250,8 +264,8 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
                             statusBanner.tone === 'error'
-                              ? "bg-[linear-gradient(90deg,#f87171,#ef4444)] shadow-[0_0_16px_rgba(240,72,72,0.35)]"
-                              : "bg-[linear-gradient(90deg,#3dd9a0,#6c8aff)] shadow-[0_0_18px_rgba(61,217,160,0.24)]"
+                              ? "bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_16px_rgba(240,72,72,0.35)]"
+                              : "bg-gradient-to-r from-glow-success to-glow-accent shadow-[0_0_18px_rgba(61,217,160,0.24)]"
                           )}
                           style={{ width: `${progressPercent}%` }}
                         />
@@ -260,33 +274,33 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
                     <div className="flex flex-wrap gap-2 text-[11px]">
                       {statusBanner.progress && (
                         <>
-                          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-200">
+                          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-primary">
                             {lang === 'ru' ? 'Загружено' : 'Loaded'}: <strong>{statusBanner.progress.loaded}</strong>
                           </span>
                           {typeof statusBanner.progress.total === 'number' && (
-                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-200">
+                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-primary">
                               {lang === 'ru' ? 'Всего' : 'Total'}: <strong>{statusBanner.progress.total}</strong>
                             </span>
                           )}
                           {typeof statusBanner.progress.remaining === 'number' && (
-                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-200">
+                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-primary">
                               {lang === 'ru' ? 'Осталось' : 'Left'}: <strong>{statusBanner.progress.remaining}</strong>
                             </span>
                           )}
                           {formatMegabytes(statusBanner.progress.loadedBytes) && (
-                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-200">
+                            <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-primary">
                               {lang === 'ru' ? 'Объём' : 'Volume'}: <strong>{formatMegabytes(statusBanner.progress.loadedBytes)}</strong>
                             </span>
                           )}
                         </>
                       )}
                       {typeof statusBanner.diagnostics?.durationMs === 'number' && (
-                        <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-200">
+                        <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-primary">
                           {lang === 'ru' ? 'Сеть' : 'Network'}: <strong>{statusBanner.diagnostics.durationMs} ms</strong>
                         </span>
                       )}
                       {statusBanner.diagnostics?.step && (
-                        <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-400">
+                        <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-glow-text-muted">
                           {statusBanner.diagnostics.step}
                         </span>
                       )}
@@ -306,7 +320,7 @@ export function Layout({ children, onCompose }: { children: ReactNode; onCompose
         {/* Floating Action Button (Mobile) */}
         <button
           onClick={() => onCompose()}
-          className="md:hidden absolute bottom-6 right-6 w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-zinc-950 shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:scale-105 transition-all active:scale-95 z-30"
+          className="md:hidden absolute bottom-6 right-6 w-14 h-14 bg-glow-accent rounded-full flex items-center justify-center text-white shadow-glow-button hover:shadow-glow-button-hover hover:scale-105 transition-all active:scale-95 z-30"
         >
           <Edit3 className="w-6 h-6" />
         </button>
@@ -389,8 +403,8 @@ function SidebarContent({
 
   return (
     <>
-      <div className="p-4 h-16 flex items-center border-b border-zinc-800/50 shrink-0">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+      <div className="p-4 h-16 flex items-center border-b border-glow-border-subtle shrink-0">
+        <h1 className="text-xl font-bold text-gradient-glow tracking-tight">
           {t('app.title', lang)}
         </h1>
       </div>
@@ -400,14 +414,14 @@ function SidebarContent({
           <button
             onClick={handleFetch}
             disabled={isFetching}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-medium text-sm border transition-all disabled:opacity-50 border-[#5b8078]"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-glow-surface hover:bg-glow-elevated text-glow-text-secondary rounded-xl font-medium text-sm border border-glow-border-default transition-all disabled:opacity-50"
           >
-            <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin text-emerald-400")} />
+            <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin text-glow-accent")} />
             {t('layout.getMail', lang)}
           </button>
           <button
             onClick={() => onCompose?.()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 text-zinc-950 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(16,185,129,0.35),0_0_40px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5),0_0_60px_rgba(16,185,129,0.25)] hover:-translate-y-0.5 transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-glow-accent text-white rounded-xl font-bold text-sm shadow-glow-button hover:shadow-glow-button-hover hover:-translate-y-0.5 transition-all"
           >
             <Edit3 className="w-4 h-4" />
             {t('layout.compose', lang)}
@@ -418,32 +432,38 @@ function SidebarContent({
       <div className="flex-1 overflow-y-auto py-2 px-3 space-y-1">
         {/* Total email counter */}
         <div className="px-3 py-2 mb-1 flex items-center gap-2">
-          <Mail className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-xs font-extrabold text-emerald-300 tracking-wide">
+          <Mail className="w-3.5 h-3.5 text-glow-accent" />
+          <span className="text-xs font-extrabold text-glow-accent tracking-wide">
             {totalEmails || emails.length} {lang === 'ru' ? 'писем' : 'emails'}
           </span>
         </div>
+        
         <div className="flex items-center justify-between px-3 mt-1 mb-2">
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t('layout.folders', lang)}</span>
-          <button onClick={() => setShowNewFolderModal(true)} className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-200 transition-colors">
+          <span className="text-xs font-semibold text-glow-text-muted uppercase tracking-wider">{t('layout.folders', lang)}</span>
+          <button 
+            onClick={() => setShowNewFolderModal(true)} 
+            className="p-1 hover:bg-glow-surface rounded text-glow-text-secondary hover:text-glow-text-primary transition-colors"
+          >
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
+        
         {folders.map((folder) => {
           const Icon = iconMap[folder.icon] || FolderIcon;
           const isActive = currentFolder === folder.id;
           const count = getFolderCount(folder.id);
           const hasChildren = folder.children && folder.children.length > 0;
           const isExpanded = expandedFolders[folder.id] ?? false;
+          
           return (
-             <div key={folder.id}>
+            <div key={folder.id}>
               <div
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                    isActive
-                    ? "bg-emerald-500/15 text-emerald-300 font-bold shadow-[inset_0_0_20px_rgba(16,185,129,0.08)]"
-                    : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200",
-                  dragOverFolder === folder.id && "ring-2 ring-emerald-400/50 bg-emerald-500/10"
+                  isActive
+                    ? "bg-glow-accent-muted text-glow-accent font-bold"
+                    : "text-glow-text-secondary hover:bg-glow-surface hover:text-glow-text-primary",
+                  dragOverFolder === folder.id && "ring-2 ring-glow-accent/50 bg-glow-accent/10"
                 )}
               >
                 {hasChildren && (
@@ -453,7 +473,7 @@ function SidebarContent({
                       e.stopPropagation();
                       setExpandedFolders(prev => ({ ...prev, [folder.id]: !isExpanded }));
                     }}
-                    className="p-0.5 -ml-1 hover:bg-zinc-700/50 rounded transition-colors cursor-pointer"
+                    className="p-0.5 -ml-1 hover:bg-glow-surface rounded transition-colors cursor-pointer"
                   >
                     {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                   </span>
@@ -465,25 +485,29 @@ function SidebarContent({
                   onDrop={(e) => handleFolderDrop(e, folder.id)}
                   className="flex items-center gap-3 flex-1 min-w-0 text-left"
                 >
-                <Icon className={cn("w-4 h-4", isActive ? "text-emerald-400" : "text-zinc-500")} />
-                <span className="flex-1 text-left">{translateFolderName(folder.id, folder.name, lang)}</span>
-                 {count > 0 && (
-                  <span className={cn(
-                    "px-2 py-0.5 rounded-full text-xs font-extrabold",
-                    isActive ? "bg-emerald-500/25 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.3)]" : "bg-zinc-800 text-zinc-300"
-                  )}>
-                    {count}
-                  </span>
-                 )}
+                  <Icon className={cn("w-4 h-4", isActive ? "text-glow-accent" : "text-glow-text-muted")} />
+                  <span className="flex-1 text-left">{translateFolderName(folder.id, folder.name, lang)}</span>
+                  {count > 0 && (
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-xs font-extrabold",
+                      isActive 
+                        ? "bg-glow-accent/20 text-glow-accent shadow-[0_0_8px_rgba(108,138,255,0.3)]" 
+                        : "bg-glow-surface text-glow-text-secondary"
+                    )}>
+                      {count}
+                    </span>
+                  )}
                 </button>
               </div>
+              
               {hasChildren && isExpanded && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-zinc-800/50 pl-2">
-                  {folder.children!.map((child) => {
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-glow-border-subtle pl-2">
+                  {folder.children!.map((child: any) => {
                     const ChildIcon = iconMap[child.icon] || FolderIcon;
                     const isChildActive = currentFolder === child.id;
                     const childCount = getFolderCount(child.id);
                     const childColor = folderColors[child.id];
+                    
                     return (
                       <button
                         key={child.id}
@@ -494,17 +518,19 @@ function SidebarContent({
                         className={cn(
                           "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200",
                           isChildActive
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300",
-                          dragOverFolder === child.id && "ring-2 ring-emerald-400/50 bg-emerald-500/10"
+                            ? "bg-glow-accent/10 text-glow-accent"
+                            : "text-glow-text-muted hover:bg-glow-surface hover:text-glow-text-secondary",
+                          dragOverFolder === child.id && "ring-2 ring-glow-accent/50 bg-glow-accent/10"
                         )}
                       >
                         <ChildIcon className="w-3.5 h-3.5" style={childColor ? { color: childColor } : undefined} />
-                        <span className="flex-1 text-left truncate" style={childColor && !isChildActive ? { color: childColor } : undefined}>{translateFolderName(child.id, child.name, lang)}</span>
+                        <span className="flex-1 text-left truncate" style={childColor && !isChildActive ? { color: childColor } : undefined}>
+                          {translateFolderName(child.id, child.name, lang)}
+                        </span>
                         {childCount > 0 && (
                           <span className={cn(
                             "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                            isChildActive ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-400"
+                            isChildActive ? "bg-glow-accent/20 text-glow-accent" : "bg-glow-surface text-glow-text-muted"
                           )}>
                             {childCount}
                           </span>
@@ -520,32 +546,32 @@ function SidebarContent({
       </div>
 
       {/* Address Book */}
-      <div className="px-3 py-2 border-t border-zinc-800/50">
+      <div className="px-3 py-2 border-t border-glow-border-subtle">
         <button
           onClick={() => setShowAddressBook(!showAddressBook)}
-          className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors text-[#528e7a]"
+          className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors text-glow-accent/70 hover:text-glow-accent"
         >
           <BookUser className="w-3.5 h-3.5" />
           <span className="flex-1 text-left">{t('layout.addressBook', lang)}</span>
           {showAddressBook ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
         {showAddressBook && (
-          <div className="mt-1 space-y-1 max-h-40 overflow-y-auto glow-scrollbar">
+          <div className="mt-1 space-y-1 max-h-40 overflow-y-auto">
             {contacts.length === 0 && (
-              <p className="px-3 py-2 text-xs text-zinc-600">{t('layout.noContacts', lang)}</p>
+              <p className="px-3 py-2 text-xs text-glow-text-muted">{t('layout.noContacts', lang)}</p>
             )}
             {contacts.map(c => (
-              <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors group/contact">
-                <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
+              <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-glow-surface transition-colors group/contact">
+                <div className="w-6 h-6 rounded-full bg-glow-surface flex items-center justify-center text-[10px] font-bold text-glow-text-muted shrink-0">
                   {c.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-medium text-zinc-300 truncate">{c.name}</div>
-                  <div className="text-[10px] text-zinc-500 truncate">{c.email}</div>
+                  <div className="text-xs font-medium text-glow-text-secondary truncate">{c.name}</div>
+                  <div className="text-[10px] text-glow-text-muted truncate">{c.email}</div>
                 </div>
                 <button
                   onClick={() => onCompose?.({ to: c.email })}
-                  className="p-1 rounded hover:bg-zinc-700 text-zinc-500 hover:text-emerald-400 transition-colors opacity-0 group-hover/contact:opacity-100"
+                  className="p-1 rounded hover:bg-glow-surface text-glow-text-muted hover:text-glow-accent transition-colors opacity-0 group-hover/contact:opacity-100"
                   title={lang === 'ru' ? 'Написать письмо' : 'Compose email'}
                 >
                   <Mail className="w-3.5 h-3.5" />
@@ -554,7 +580,7 @@ function SidebarContent({
             ))}
             <button
               onClick={() => setShowAddContact(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-500 hover:text-emerald-400 transition-colors w-full"
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-glow-text-muted hover:text-glow-accent transition-colors w-full"
             >
               <Plus className="w-3 h-3" /> {t('layout.addContact', lang)}
             </button>
@@ -570,11 +596,14 @@ function SidebarContent({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-sm bg-glow-elevated border border-glow-border-default rounded-2xl shadow-glow-modal overflow-hidden"
             >
-              <div className="p-4 border-b border-zinc-800/50 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-zinc-100">{t('layout.addContact', lang)}</h2>
-                <button onClick={() => setShowAddContact(false)} className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors">
+              <div className="p-4 border-b border-glow-border-subtle flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-glow-text-primary">{t('layout.addContact', lang)}</h2>
+                <button 
+                  onClick={() => setShowAddContact(false)} 
+                  className="p-2 hover:bg-glow-surface rounded-full text-glow-text-secondary hover:text-glow-text-primary transition-colors"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -588,22 +617,37 @@ function SidebarContent({
                 }
               }} className="p-4 space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">{t('layout.contactName', lang)}</label>
-                  <input type="text" value={newContactName} onChange={e => setNewContactName(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all glow-input"
-                    autoFocus />
+                  <label className="block text-sm font-medium text-glow-text-secondary mb-1">{t('layout.contactName', lang)}</label>
+                  <input 
+                    type="text" 
+                    value={newContactName} 
+                    onChange={e => setNewContactName(e.target.value)}
+                    className="w-full bg-glow-deep border border-glow-border-default rounded-xl px-4 py-2.5 text-glow-text-primary focus:outline-none focus:border-glow-accent/50 focus:ring-1 focus:ring-glow-accent/50 transition-all input-glow"
+                    autoFocus 
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">{t('layout.contactEmail', lang)}</label>
-                  <input type="email" value={newContactEmail} onChange={e => setNewContactEmail(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all glow-input" />
+                  <label className="block text-sm font-medium text-glow-text-secondary mb-1">{t('layout.contactEmail', lang)}</label>
+                  <input 
+                    type="email" 
+                    value={newContactEmail} 
+                    onChange={e => setNewContactEmail(e.target.value)}
+                    className="w-full bg-glow-deep border border-glow-border-default rounded-xl px-4 py-2.5 text-glow-text-primary focus:outline-none focus:border-glow-accent/50 focus:ring-1 focus:ring-glow-accent/50 transition-all input-glow" 
+                  />
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => setShowAddContact(false)} className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddContact(false)} 
+                    className="px-4 py-2 text-sm font-medium text-glow-text-secondary hover:text-glow-text-primary transition-colors"
+                  >
                     {t('layout.cancel', lang)}
                   </button>
-                  <button type="submit" disabled={!newContactName.trim() || !newContactEmail.trim()}
-                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button 
+                    type="submit" 
+                    disabled={!newContactName.trim() || !newContactEmail.trim()}
+                    className="px-4 py-2 bg-glow-accent hover:bg-glow-accent-secondary text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {t('layout.create', lang)}
                   </button>
                 </div>
@@ -613,6 +657,7 @@ function SidebarContent({
         )}
       </AnimatePresence>
 
+      {/* New Folder Modal */}
       <AnimatePresence>
         {showNewFolderModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -620,25 +665,25 @@ function SidebarContent({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-sm bg-glow-elevated border border-glow-border-default rounded-2xl shadow-glow-modal overflow-hidden"
             >
-              <div className="p-4 border-b border-zinc-800/50 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-zinc-100">{t('layout.createFolder', lang)}</h2>
+              <div className="p-4 border-b border-glow-border-subtle flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-glow-text-primary">{t('layout.createFolder', lang)}</h2>
                 <button
                   onClick={() => setShowNewFolderModal(false)}
-                  className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="p-2 hover:bg-glow-surface rounded-full text-glow-text-secondary hover:text-glow-text-primary transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <form onSubmit={handleAddFolder} className="p-4">
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-zinc-400 mb-1.5">{t('layout.folderName', lang)}</label>
+                  <label className="block text-sm font-medium text-glow-text-secondary mb-1.5">{t('layout.folderName', lang)}</label>
                   <input
                     type="text"
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                    className="w-full bg-glow-deep border border-glow-border-default rounded-xl px-4 py-2.5 text-glow-text-primary focus:outline-none focus:border-glow-accent/50 focus:ring-1 focus:ring-glow-accent/50 transition-all input-glow"
                     placeholder={t('layout.folderPlaceholder', lang)}
                     autoFocus
                   />
@@ -647,14 +692,14 @@ function SidebarContent({
                   <button
                     type="button"
                     onClick={() => setShowNewFolderModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-glow-text-secondary hover:text-glow-text-primary transition-colors"
                   >
                     {t('layout.cancel', lang)}
                   </button>
                   <button
                     type="submit"
                     disabled={!newFolderName.trim()}
-                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-glow-accent hover:bg-glow-accent-secondary text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t('layout.create', lang)}
                   </button>

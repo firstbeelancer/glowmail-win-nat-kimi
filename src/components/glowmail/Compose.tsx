@@ -481,7 +481,7 @@ export function Compose({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={handleSaveDraft} />
       
       <div
-        className="bg-zinc-950 sm:rounded-2xl border border-zinc-800/50 shadow-2xl flex flex-col pointer-events-auto overflow-hidden relative"
+        className="bg-glow-primary sm:rounded-2xl border border-glow-border-default/50 shadow-glow-modal flex flex-col pointer-events-auto overflow-hidden relative"
         style={{
           width: '100%',
           height: '100%',
@@ -495,12 +495,12 @@ export function Compose({
           className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-10 group hidden sm:block"
           title="Drag to resize"
         >
-          <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-zinc-600 group-hover:border-emerald-400 transition-colors" />
+          <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-glow-border-default group-hover:border-glow-accent transition-colors" />
         </div>
 
         {/* Header */}
-        <div className="h-14 border-b border-zinc-800/50 flex items-center justify-between px-4 bg-zinc-900/50 shrink-0">
-          <h2 className="text-sm font-semibold text-zinc-100">{t('compose.newMessage', lang)}</h2>
+        <div className="h-14 border-b border-glow-border-default/50 flex items-center justify-between px-4 bg-glow-surface/50 shrink-0">
+          <h2 className="text-sm font-semibold text-glow-text-primary">{t('compose.newMessage', lang)}</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -885,14 +885,14 @@ export function Compose({
                   toast.error(lang === 'ru' ? 'Не смогла открыть отдельное окно письма.' : 'Could not open a separate compose window.');
                 }
               }}
-              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+              className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
               title={t('layout.openInWindow', lang)}
             >
               <ExternalLink className="w-4 h-4" />
             </button>
             <button
               onClick={handleSaveDraft}
-              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+              className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -901,8 +901,8 @@ export function Compose({
 
         {/* Form Fields */}
         <div className="flex flex-col shrink-0">
-          <div className="flex items-center px-4 py-3 border-b border-zinc-800/50 focus-within:bg-zinc-900/30 transition-colors relative">
-            <span className="text-zinc-500 text-sm w-16">{t('compose.to', lang)}</span>
+          <div className="flex items-center px-4 py-3 border-b border-glow-border-default/50 focus-within:bg-glow-surface/30 transition-colors relative">
+            <span className="text-glow-text-secondary text-sm w-16">{t('compose.to', lang)}</span>
             <input
               type="text"
               value={to}
@@ -910,13 +910,13 @@ export function Compose({
               onBlur={(e) => finalizeRecipientField(e.target.value, setTo)}
               onKeyDown={(e) => handleRecipientKeyDown(e, to, setTo)}
               onPaste={(e) => handleRecipientPaste(e, to, setTo)}
-              className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-100 placeholder:text-zinc-600"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-glow-text-primary placeholder:text-glow-text-muted"
               placeholder="recipient@example.com"
               autoFocus
             />
             <button 
               onClick={() => setShowCcBcc(!showCcBcc)}
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors ml-2"
+              className="text-xs text-glow-text-secondary hover:text-glow-text-primary transition-colors ml-2"
             >
               {showCcBcc ? t('compose.hideCcBcc', lang) : t('compose.showCcBcc', lang)}
             </button>
@@ -924,8 +924,8 @@ export function Compose({
           
           {showCcBcc && (
             <>
-              <div className="flex items-center px-4 py-3 border-b border-zinc-800/50 focus-within:bg-zinc-900/30 transition-colors">
-                <span className="text-zinc-500 text-sm w-16">{t('compose.cc', lang)}</span>
+              <div className="flex items-center px-4 py-3 border-b border-glow-border-default/50 focus-within:bg-glow-surface/30 transition-colors">
+                <span className="text-glow-text-secondary text-sm w-16">{t('compose.cc', lang)}</span>
                 <input
                   type="text"
                   value={cc}
@@ -933,12 +933,12 @@ export function Compose({
                   onBlur={(e) => finalizeRecipientField(e.target.value, setCc)}
                   onKeyDown={(e) => handleRecipientKeyDown(e, cc, setCc)}
                   onPaste={(e) => handleRecipientPaste(e, cc, setCc)}
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-100 placeholder:text-zinc-600"
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-glow-text-primary placeholder:text-glow-text-muted"
                   placeholder="cc@example.com"
                 />
               </div>
-              <div className="flex items-center px-4 py-3 border-b border-zinc-800/50 focus-within:bg-zinc-900/30 transition-colors">
-                <span className="text-zinc-500 text-sm w-16">{t('compose.bcc', lang)}</span>
+              <div className="flex items-center px-4 py-3 border-b border-glow-border-default/50 focus-within:bg-glow-surface/30 transition-colors">
+                <span className="text-glow-text-secondary text-sm w-16">{t('compose.bcc', lang)}</span>
                 <input
                   type="text"
                   value={bcc}
@@ -946,24 +946,24 @@ export function Compose({
                   onBlur={(e) => finalizeRecipientField(e.target.value, setBcc)}
                   onKeyDown={(e) => handleRecipientKeyDown(e, bcc, setBcc)}
                   onPaste={(e) => handleRecipientPaste(e, bcc, setBcc)}
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-100 placeholder:text-zinc-600"
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-glow-text-primary placeholder:text-glow-text-muted"
                   placeholder="bcc@example.com"
                 />
               </div>
             </>
           )}
 
-          <div className="flex items-center px-4 py-3 border-b border-zinc-800/50 focus-within:bg-zinc-900/30 transition-colors">
-            <span className="text-zinc-500 text-sm w-16">{t('compose.subjectLabel', lang)}</span>
+          <div className="flex items-center px-4 py-3 border-b border-glow-border-default/50 focus-within:bg-glow-surface/30 transition-colors">
+            <span className="text-glow-text-secondary text-sm w-16">{t('compose.subjectLabel', lang)}</span>
             <input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-100 font-medium placeholder:text-zinc-600"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-glow-text-primary font-medium placeholder:text-glow-text-muted"
               placeholder={t('compose.subjectPlaceholder', lang)}
             />
             <div className="flex items-center gap-2 ml-4">
-              <span className="text-xs text-zinc-500">{t('compose.importance', lang)}</span>
+              <span className="text-xs text-glow-text-secondary">{t('compose.importance', lang)}</span>
               <Select
                 value={importance}
                 onValueChange={(v) => setImportance(v as 'high' | 'normal' | 'low')}
@@ -985,29 +985,29 @@ export function Compose({
           </div>
 
           {/* Tags Row */}
-          <div className="flex items-center px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/10 shrink-0">
-            <span className="text-zinc-500 text-sm w-16">{t('compose.tagsLabel', lang)}</span>
+          <div className="flex items-center px-4 py-2 border-b border-glow-border-default/50 bg-glow-surface/10 shrink-0">
+            <span className="text-glow-text-secondary text-sm w-16">{t('compose.tagsLabel', lang)}</span>
             <div className="flex items-center gap-2 flex-wrap flex-1">
               {emailTags.map(tag => {
                 const tagDef = settings.availableTags.find(t => t.name === tag);
                 return (
-                  <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800/80 text-zinc-300 border border-zinc-700/50">
+                  <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-glow-elevated/80 text-glow-text-primary border border-glow-border-subtle/50">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tagDef?.color || '#10b981' }} />
                     {tag}
-                    <button onClick={() => setEmailTags(prev => prev.filter(t => t !== tag))} className="ml-0.5 text-zinc-500 hover:text-red-400">×</button>
+                    <button onClick={() => setEmailTags(prev => prev.filter(t => t !== tag))} className="ml-0.5 text-glow-text-secondary hover:text-red-400">×</button>
                   </span>
                 );
               })}
               <div className="relative">
                 <button
                   onClick={() => setShowTagPicker(!showTagPicker)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-glow-text-secondary hover:text-glow-text-primary hover:bg-glow-elevated transition-colors"
                 >
                   <Tag className="w-3 h-3" />
                   +
                 </button>
                 {showTagPicker && (
-                  <div className="absolute left-0 top-full mt-1 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
+                  <div className="absolute left-0 top-full mt-1 w-40 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50">
                     <div className="p-1.5 flex flex-col max-h-48 overflow-y-auto">
                       {settings.availableTags.filter(t => !emailTags.includes(t.name)).map(tag => (
                         <button
@@ -1016,7 +1016,7 @@ export function Compose({
                             setEmailTags(prev => [...prev, tag.name]);
                             setShowTagPicker(false);
                           }}
-                          className="flex items-center gap-2 text-left px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 rounded-lg transition-colors"
+                          className="flex items-center gap-2 text-left px-3 py-1.5 text-xs text-glow-text-muted hover:bg-glow-elevated hover:text-glow-text-primary rounded-lg transition-colors"
                         >
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
                           {tag.name}
@@ -1030,7 +1030,7 @@ export function Compose({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30 shrink-0 overflow-visible relative" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-glow-border-default/50 bg-glow-surface/30 shrink-0 overflow-visible relative" style={{ scrollbarWidth: 'none' }}>
           <Select
             onValueChange={(v) => execCommand('fontName', v)}
             defaultValue={settings.composerFont || 'Involve'}
@@ -1064,23 +1064,23 @@ export function Compose({
               <SelectItem value="7">{t('compose.huge', lang)}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="w-px h-4 bg-zinc-800 mx-1" />
-          <button onClick={() => execCommand('bold')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Bold className="w-4 h-4" /></button>
-          <button onClick={() => execCommand('italic')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Italic className="w-4 h-4" /></button>
-          <button onClick={() => execCommand('underline')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Underline className="w-4 h-4" /></button>
-          <div className="w-px h-4 bg-zinc-800 mx-1" />
-          <button onClick={() => execCommand('insertUnorderedList')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><List className="w-4 h-4" /></button>
-          <button onClick={() => execCommand('insertOrderedList')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><ListOrdered className="w-4 h-4" /></button>
-          <div className="w-px h-4 bg-zinc-800 mx-1" />
+          <div className="w-px h-4 bg-glow-elevated mx-1" />
+          <button onClick={() => execCommand('bold')} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><Bold className="w-4 h-4" /></button>
+          <button onClick={() => execCommand('italic')} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><Italic className="w-4 h-4" /></button>
+          <button onClick={() => execCommand('underline')} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><Underline className="w-4 h-4" /></button>
+          <div className="w-px h-4 bg-glow-elevated mx-1" />
+          <button onClick={() => execCommand('insertUnorderedList')} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><List className="w-4 h-4" /></button>
+          <button onClick={() => execCommand('insertOrderedList')} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><ListOrdered className="w-4 h-4" /></button>
+          <div className="w-px h-4 bg-glow-elevated mx-1" />
           <div className="flex items-center gap-1">
             <input type="color" onChange={(e) => execCommand('foreColor', e.target.value)} className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent" title={t('compose.textColor', lang)} />
             <input type="color" onChange={(e) => execCommand('hiliteColor', e.target.value)} className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent" title={t('compose.highlightColor', lang)} />
           </div>
-          <div className="w-px h-4 bg-zinc-800 mx-1" />
+          <div className="w-px h-4 bg-glow-elevated mx-1" />
           <button onClick={() => {
             const url = prompt(lang === 'ru' ? 'Введите URL:' : 'Enter URL:');
             if (url) execCommand('createLink', url);
-          }} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Link className="w-4 h-4" /></button>
+          }} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors"><Link className="w-4 h-4" /></button>
           <input
             type="file"
             accept="image/*"
@@ -1098,52 +1098,52 @@ export function Compose({
               if (imageInputRef.current) imageInputRef.current.value = '';
             }}
           />
-          <button onClick={() => imageInputRef.current?.click()} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors" title={t('compose.insertImage', lang)}><ImageIcon className="w-4 h-4" /></button>
-          <div className="w-px h-4 bg-zinc-800 mx-1" />
+          <button onClick={() => imageInputRef.current?.click()} className="p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors" title={t('compose.insertImage', lang)}><ImageIcon className="w-4 h-4" /></button>
+          <div className="w-px h-4 bg-glow-elevated mx-1" />
           {/* Code insertion dropdown */}
           <div className="relative">
             <button
               onClick={() => { setShowCodeMenu(!showCodeMenu); setShowAiMenu(false); }}
-              className={cn("p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors", showCodeMenu && "bg-zinc-800 text-zinc-200")}
+              className={cn("p-1.5 rounded hover:bg-glow-elevated text-glow-text-muted transition-colors", showCodeMenu && "bg-glow-elevated text-glow-text-primary")}
               title={lang === 'ru' ? 'Вставить код' : 'Insert code'}
             >
               <Code className="w-4 h-4" />
             </button>
             {showCodeMenu && (
-              <div className="absolute left-0 bottom-full mb-2 w-52 rounded-2xl shadow-2xl overflow-hidden z-[60]" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+              <div className="absolute left-0 bottom-full mb-2 w-52 rounded-2xl shadow-glow-modal overflow-hidden z-[60]" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
                 <div className="p-2 flex flex-col gap-0.5">
-                  <span className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--zinc-500))' }}>{lang === 'ru' ? 'Вставить код' : 'Insert Code'}</span>
+                  <span className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>{lang === 'ru' ? 'Вставить код' : 'Insert Code'}</span>
                   <button
                     onClick={() => insertCodeElement('inline')}
                     className="flex items-center gap-2.5 text-left px-3 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <Braces className="w-4 h-4" style={{ color: 'hsl(var(--zinc-500))' }} />
+                    <Braces className="w-4 h-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
                     <div>
                       <div className="font-medium">Inline code</div>
-                      <div className="text-[11px]" style={{ color: 'hsl(var(--zinc-500))' }}>{lang === 'ru' ? 'Код внутри строки' : 'Code within text'}</div>
+                      <div className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{lang === 'ru' ? 'Код внутри строки' : 'Code within text'}</div>
                     </div>
                   </button>
                   <button
                     onClick={() => insertCodeElement('block')}
                     className="flex items-center gap-2.5 text-left px-3 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <Code className="w-4 h-4" style={{ color: 'hsl(var(--zinc-500))' }} />
+                    <Code className="w-4 h-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
                     <div>
                       <div className="font-medium">Code block</div>
-                      <div className="text-[11px]" style={{ color: 'hsl(var(--zinc-500))' }}>{lang === 'ru' ? 'Многострочный код' : 'Multi-line code'}</div>
+                      <div className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{lang === 'ru' ? 'Многострочный код' : 'Multi-line code'}</div>
                     </div>
                   </button>
                   <button
                     onClick={() => insertCodeElement('log')}
                     className="flex items-center gap-2.5 text-left px-3 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <Terminal className="w-4 h-4" style={{ color: 'hsl(var(--zinc-500))' }} />
+                    <Terminal className="w-4 h-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
                     <div>
                       <div className="font-medium">{lang === 'ru' ? 'Лог / Терминал' : 'Log / Terminal'}</div>
-                      <div className="text-[11px]" style={{ color: 'hsl(var(--zinc-500))' }}>{lang === 'ru' ? 'Логи, конфиги, вывод' : 'Logs, configs, output'}</div>
+                      <div className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{lang === 'ru' ? 'Логи, конфиги, вывод' : 'Logs, configs, output'}</div>
                     </div>
                   </button>
                 </div>
@@ -1161,8 +1161,8 @@ export function Compose({
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                 isAiLoading
-                  ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 hover:from-emerald-500/30 hover:to-cyan-500/30 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.25)]"
+                  ? "bg-glow-elevated text-glow-text-secondary cursor-not-allowed"
+                  : "bg-gradient-to-r from-glow-accent/20 to-glow-accent-secondary/20 text-glow-accent hover:from-glow-accent/30 hover:to-glow-accent-secondary/30 border border-glow-accent/30 shadow-glow-accent hover:shadow-glow-accent-strong"
               )}
             >
               {isAiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -1170,13 +1170,13 @@ export function Compose({
             </button>
 
             {showAiMenu && (
-              <div className="absolute right-0 bottom-full mb-2 w-56 rounded-2xl shadow-2xl overflow-hidden z-[60]" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+              <div className="absolute right-0 bottom-full mb-2 w-56 rounded-2xl shadow-glow-modal overflow-hidden z-[60]" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
                 <div className="p-2 flex flex-col gap-0.5">
                   <button onClick={() => handleAiAction('spellcheck')} className="text-left px-4 py-2.5 text-sm font-medium text-white bg-[#1CA88E] rounded-xl transition-colors hover:bg-[#179b82]">{t('compose.proofread', lang)}</button>
-                  <button onClick={() => handleAiAction('professional')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.makeProfessional', lang)}</button>
-                  <button onClick={() => handleAiAction('friendly')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.makeFriendly', lang)}</button>
-                  <button onClick={() => handleAiAction('rewrite')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.rewrite', lang)}</button>
-                  <button onClick={() => handleAiAction('translate')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--zinc-200))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.autoTranslate', lang)}</button>
+                  <button onClick={() => handleAiAction('professional')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.makeProfessional', lang)}</button>
+                  <button onClick={() => handleAiAction('friendly')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.makeFriendly', lang)}</button>
+                  <button onClick={() => handleAiAction('rewrite')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.rewrite', lang)}</button>
+                  <button onClick={() => handleAiAction('translate')} className="text-left px-4 py-2.5 text-sm rounded-xl transition-colors" style={{ color: 'hsl(var(--foreground))' }} onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>{t('compose.autoTranslate', lang)}</button>
                 </div>
               </div>
             )}
@@ -1198,7 +1198,7 @@ export function Compose({
             onInput={(e) => setBody((e.target as HTMLDivElement).innerHTML)}
           />
           {!body && (
-            <div className="absolute top-4 left-4 text-sm text-zinc-600 pointer-events-none">
+            <div className="absolute top-4 left-4 text-sm text-glow-text-muted pointer-events-none">
               {t('compose.placeholder', lang)}
             </div>
           )}
@@ -1206,14 +1206,14 @@ export function Compose({
 
         {/* Attachments Preview */}
         {attachments.length > 0 && (
-          <div className="px-4 py-2 border-t border-zinc-800/50 bg-zinc-900/30 flex flex-wrap gap-2 shrink-0">
+          <div className="px-4 py-2 border-t border-glow-border-default/50 bg-glow-surface/30 flex flex-wrap gap-2 shrink-0">
             {attachments.map(att => (
-              <div key={att.id} className="flex items-center gap-2 px-2 py-1 bg-zinc-800 rounded-md text-xs text-zinc-300">
-                <Paperclip className="w-3 h-3 text-zinc-500" />
+              <div key={att.id} className="flex items-center gap-2 px-2 py-1 bg-glow-elevated rounded-md text-xs text-glow-text-primary">
+                <Paperclip className="w-3 h-3 text-glow-text-secondary" />
                 <span className="max-w-[150px] truncate">{att.name}</span>
                 <button 
                   onClick={() => setAttachments(prev => prev.filter(a => a.id !== att.id))}
-                  className="p-0.5 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-red-400 transition-colors"
+                  className="p-0.5 hover:bg-glow-border-default rounded-full text-glow-text-muted hover:text-red-400 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -1223,7 +1223,7 @@ export function Compose({
         )}
 
         {/* Footer */}
-        <div className="border-t border-zinc-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 py-2 sm:py-0 sm:h-16 bg-zinc-950 shrink-0 gap-2 sm:gap-0">
+        <div className="border-t border-glow-border-default/50 flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 py-2 sm:py-0 sm:h-16 bg-glow-primary shrink-0 gap-2 sm:gap-0">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -1234,7 +1234,7 @@ export function Compose({
           <div className="flex items-center gap-2 min-w-0">
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors shrink-0"
+              className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors shrink-0"
               title={t('compose.attachFiles', lang)}
             >
               <Paperclip className="w-5 h-5" />
@@ -1245,8 +1245,8 @@ export function Compose({
               className={cn(
                 "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all",
                 signThis
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                  : "bg-zinc-800/50 text-zinc-500 border-zinc-700/30 hover:text-zinc-300"
+                  ? "bg-glow-accent/10 text-glow-accent border-glow-accent/20"
+                  : "bg-glow-elevated/50 text-glow-text-secondary border-glow-border-subtle/30 hover:text-glow-text-primary"
               )}
               title={lang === 'ru' ? (signThis ? 'Подпись включена' : 'Подпись выключена') : (signThis ? 'Signing enabled' : 'Signing disabled')}
             >
@@ -1259,7 +1259,7 @@ export function Compose({
                 "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all",
                 encryptThis
                   ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                  : "bg-zinc-800/50 text-zinc-500 border-zinc-700/30 hover:text-zinc-300"
+                  : "bg-glow-elevated/50 text-glow-text-secondary border-glow-border-subtle/30 hover:text-glow-text-primary"
               )}
               title={lang === 'ru' ? (encryptThis ? 'Шифрование включено' : 'Шифрование выключено') : (encryptThis ? 'Encryption enabled' : 'Encryption disabled')}
             >
@@ -1287,13 +1287,13 @@ export function Compose({
           <div className="flex items-center gap-2 justify-end">
             <button 
               onClick={handleSaveDraft}
-              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-sm font-medium transition-colors whitespace-nowrap"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-glow-text-primary text-sm font-medium transition-colors whitespace-nowrap"
             >
               {t('compose.saveDraft', lang)}
             </button>
             <button
               onClick={handleSend}
-              className="flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 bg-emerald-500 text-zinc-950 rounded-full font-semibold text-sm shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:scale-105 transition-all active:scale-95 whitespace-nowrap shrink-0"
+              className="flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 bg-glow-accent text-glow-primary rounded-full font-semibold text-sm shadow-glow-button hover:shadow-glow-button-hover hover:scale-105 transition-all active:scale-95 whitespace-nowrap shrink-0"
             >
               <Send className="w-4 h-4" />
               {t('compose.send', lang)}

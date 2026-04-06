@@ -47,7 +47,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
 
   const getTagColor = (tagName: string) => {
     const tagDef = settings.availableTags.find(t => t.name === tagName);
-    return tagDef ? tagDef.color : '#10b981';
+    return tagDef ? tagDef.color : '#6c8aff';
   };
 
   const toggleEmailTag = (emailId: string, tagName: string) => {
@@ -193,13 +193,13 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     filterMode === 'from_me' ? (lang === 'ru' ? 'От меня' : 'From me') : '';
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950">
+    <div className="flex flex-col h-full bg-glow-primary">
       {/* Sort & Filter Toolbar */}
-      <div className="px-4 py-2 border-b border-zinc-800/50 flex items-center justify-between shrink-0 bg-zinc-950">
+      <div className="px-4 py-2 border-b border-glow-border-default flex items-center justify-between shrink-0 bg-glow-primary">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-zinc-500">{t('emailList.sortBy', lang)}</span>
+          <span className="text-xs font-medium text-glow-text-muted">{t('emailList.sortBy', lang)}</span>
           {filterLabel && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-glow-accent/10 text-glow-accent border border-glow-accent/20 font-medium">
               {filterLabel}
             </span>
           )}
@@ -209,13 +209,13 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
           <div className="relative">
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors bg-zinc-900 border border-zinc-800", filterMode !== 'all' && "bg-emerald-500/10 text-emerald-400 border-emerald-500/30")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors bg-glow-surface border border-glow-border-default", filterMode !== 'all' && "bg-glow-accent/10 text-glow-accent border-glow-accent/30")}
               title={lang === 'ru' ? 'Фильтр' : 'Filter'}
             >
               <Filter className="w-3.5 h-3.5" />
             </button>
             {showFilterMenu && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute right-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-lg overflow-hidden z-50">
                 <div className="p-1 flex flex-col">
                   {([
                     ['all', lang === 'ru' ? 'Все' : 'All', null],
@@ -229,7 +229,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                       onClick={() => { setFilterMode(mode); setShowFilterMenu(false); }}
                       className={cn(
                         "flex items-center gap-2 text-left px-3 py-2 text-sm rounded-lg transition-colors",
-                        filterMode === mode ? "bg-zinc-800 text-emerald-400" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                        filterMode === mode ? "bg-glow-accent-muted text-glow-accent" : "text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-text-primary"
                       )}
                     >
                       {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -240,38 +240,38 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
               </div>
             )}
           </div>
-          <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+          <div className="flex bg-glow-surface border border-glow-border-default rounded-lg p-0.5">
             <button
               onClick={() => handleSort('unread')}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors", sortBy === 'unread' && "bg-zinc-800 text-zinc-100")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors", sortBy === 'unread' && "bg-glow-elevated text-glow-text-primary")}
               title={t('emailList.unreadFirst', lang)}
             >
               <Inbox className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleSort('date')}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors", sortBy === 'date' && "bg-zinc-800 text-zinc-100")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors", sortBy === 'date' && "bg-glow-elevated text-glow-text-primary")}
               title={t('emailList.date', lang)}
             >
               <Calendar className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleSort('sender')}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors", sortBy === 'sender' && "bg-zinc-800 text-zinc-100")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors", sortBy === 'sender' && "bg-glow-elevated text-glow-text-primary")}
               title={t('emailList.sender', lang)}
             >
               <User className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleSort('subject')}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors", sortBy === 'subject' && "bg-zinc-800 text-zinc-100")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors", sortBy === 'subject' && "bg-glow-elevated text-glow-text-primary")}
               title={t('emailList.subject', lang)}
             >
               <Type className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleSort('tags')}
-              className={cn("p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors", sortBy === 'tags' && "bg-zinc-800 text-zinc-100")}
+              className={cn("p-1.5 rounded-md text-glow-text-secondary hover:text-glow-text-primary transition-colors", sortBy === 'tags' && "bg-glow-elevated text-glow-text-primary")}
               title={t('emailList.tags', lang)}
             >
             <Tag className="w-3.5 h-3.5" />
@@ -279,14 +279,14 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
           </div>
           <button
             onClick={() => setStarredOnly(prev => !prev)}
-            className={cn("p-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors", starredOnly && "bg-yellow-500/10 text-yellow-500 border-yellow-500/30")}
+            className={cn("p-1.5 bg-glow-surface border border-glow-border-default rounded-lg text-glow-text-secondary hover:text-glow-text-primary hover:bg-glow-elevated transition-colors", starredOnly && "bg-glow-priority-medium/10 text-glow-priority-medium border-glow-priority-medium/30")}
             title={t('emailList.starredOnly', lang)}
           >
-            <Star className={cn("w-3.5 h-3.5", starredOnly && "fill-yellow-500")} />
+            <Star className={cn("w-3.5 h-3.5", starredOnly && "fill-glow-priority-medium")} />
           </button>
           <button
             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-            className="p-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="p-1.5 bg-glow-surface border border-glow-border-default rounded-lg text-glow-text-secondary hover:text-glow-text-primary hover:bg-glow-elevated transition-colors"
             title={sortOrder === 'asc' ? t('emailList.ascending', lang) : t('emailList.descending', lang)}
           >
             {sortOrder === 'asc' ? <ArrowUpAZ className="w-3.5 h-3.5" /> : <ArrowDownAZ className="w-3.5 h-3.5" />}
@@ -295,41 +295,41 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
       </div>
 
       {isSearching && sortedEmails.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full">
-          <svg className="w-8 h-8 animate-spin text-primary mb-3" fill="none" viewBox="0 0 24 24">
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full">
+          <svg className="w-8 h-8 animate-spin text-glow-accent mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
           <p>{lang === 'ru' ? 'Поиск писем...' : 'Searching emails...'}</p>
         </div>
       ) : isLoading && emails.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full">
-          <svg className="w-8 h-8 animate-spin text-primary mb-3" fill="none" viewBox="0 0 24 24">
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full">
+          <svg className="w-8 h-8 animate-spin text-glow-accent mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
           <p>{lang === 'ru' ? 'Загрузка писем...' : 'Loading emails...'}</p>
         </div>
       ) : isSearchActive && searchError ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full px-6">
-          <AlertTriangle className="w-8 h-8 text-yellow-500 mb-3" />
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full px-6">
+          <AlertTriangle className="w-8 h-8 text-glow-warning mb-3" />
           <p className="text-sm text-center mb-1">{lang === 'ru' ? 'Ошибка поиска' : 'Search failed'}</p>
-          <p className="text-xs text-zinc-600 text-center mb-3">{searchError}</p>
-          <button onClick={() => setSearchQuery('')} className="text-xs text-emerald-400 hover:underline">
+          <p className="text-xs text-glow-text-muted text-center mb-3">{searchError}</p>
+          <button onClick={() => setSearchQuery('')} className="text-xs text-glow-accent hover:underline">
             {lang === 'ru' ? 'Сбросить поиск' : 'Clear search'}
           </button>
         </div>
       ) : connectionError ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full px-6">
-          <AlertTriangle className="w-8 h-8 text-yellow-500 mb-3" />
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full px-6">
+          <AlertTriangle className="w-8 h-8 text-glow-warning mb-3" />
           <p className="text-sm text-center mb-3">{connectionError}</p>
-          <button onClick={() => fetchEmails()} className="text-xs text-primary hover:underline">
+          <button onClick={() => fetchEmails()} className="text-xs text-glow-accent hover:underline">
             {lang === 'ru' ? 'Попробовать снова' : 'Try again'}
           </button>
         </div>
       ) : sortedEmails.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full">
-          <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(255,255,255,0.02)]">
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full">
+          <div className="w-16 h-16 bg-glow-surface rounded-full flex items-center justify-center mb-4 shadow-glow">
             {isSearchActive ? <Search className="w-8 h-8 opacity-50" /> : <Inbox className="w-8 h-8 opacity-50" />}
           </div>
           <p>{isSearchActive
@@ -337,12 +337,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
             : t('emailList.noEmails', lang)
           }</p>
           {isSearchActive && (
-            <button onClick={() => setSearchQuery('')} className="text-xs text-emerald-400 hover:underline mt-2">
+            <button onClick={() => setSearchQuery('')} className="text-xs text-glow-accent hover:underline mt-2">
               {lang === 'ru' ? 'Сбросить поиск' : 'Clear search'}
             </button>
           )}
           {filterMode !== 'all' && !isSearchActive && (
-            <button onClick={() => setFilterMode('all')} className="text-xs text-emerald-400 hover:underline mt-2">
+            <button onClick={() => setFilterMode('all')} className="text-xs text-glow-accent hover:underline mt-2">
               {lang === 'ru' ? 'Сбросить фильтр' : 'Clear filter'}
             </button>
           )}
@@ -350,16 +350,16 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
       ) : (
         <div ref={listRef} className="flex-1 overflow-y-auto" onScroll={handleScroll}>
           {isSearchActive && (
-            <div className="px-4 py-2 bg-zinc-900/50 border-b border-zinc-800/50 flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs text-zinc-400">
+            <div className="px-4 py-2 bg-glow-surface/50 border-b border-glow-border-subtle flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 text-glow-accent" />
+              <span className="text-xs text-glow-text-secondary">
                 {lang === 'ru'
                   ? `Найдено ${searchResultCount} ${searchResultCount === 1 ? 'письмо' : searchResultCount < 5 ? 'письма' : 'писем'}`
                   : `Found ${searchResultCount} ${searchResultCount === 1 ? 'email' : 'emails'}`
                 }
               </span>
               {isSearching && (
-                <svg className="w-3.5 h-3.5 animate-spin text-emerald-400 ml-auto" fill="none" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 animate-spin text-glow-accent ml-auto" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
@@ -369,8 +369,8 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
           {groupedEmails.map((group, gi) => (
             <div key={gi}>
               {group.label && (
-                <div className="px-4 py-2 bg-zinc-900/50 border-b border-zinc-800/50 sticky top-0 z-10">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{group.label}</span>
+                <div className="px-4 py-2 bg-glow-surface/50 border-b border-glow-border-subtle sticky top-0 z-10">
+                  <span className="text-xs font-bold text-glow-text-muted uppercase tracking-wider">{group.label}</span>
                 </div>
               )}
               {group.emails.map((email, index) => (
@@ -391,34 +391,34 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                 }
               }}
               className={cn(
-                "group flex flex-col p-4 border-b border-zinc-800/30 cursor-grab transition-all hover:bg-zinc-900/50 relative active:cursor-grabbing",
-                !email.read && "bg-zinc-900/20",
-                email.starred && "bg-emerald-500/[0.03] shadow-[inset_0_0_25px_rgba(16,185,129,0.06)]",
-                selectedEmailId === email.id && "ring-1 ring-emerald-500/50 bg-emerald-500/[0.06] border-l-2 border-l-emerald-500"
+                "group flex flex-col p-4 border-b border-glow-border-subtle cursor-grab transition-all hover:bg-glow-surface/50 relative active:cursor-grabbing",
+                !email.read && "bg-glow-surface/20",
+                email.starred && "bg-glow-priority-low/[0.03] shadow-[inset_0_0_25px_rgba(61,217,160,0.06)]",
+                selectedEmailId === email.id && "ring-1 ring-glow-accent/50 bg-glow-accent/[0.06] border-l-2 border-l-glow-accent"
               )}
             >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   {/* Unread indicator dot */}
                   {!email.read && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                    <span className="w-2 h-2 rounded-full bg-glow-accent shrink-0 shadow-[0_0_6px_rgba(108,138,255,0.6)]" />
                   )}
                   {email.importance === 'high' && (
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-glow-priority-high drop-shadow-[0_0_5px_rgba(240,122,58,0.5)]" />
                   )}
-                  <span className={cn("font-semibold text-sm", !email.read ? "text-zinc-100" : "text-zinc-300")}>
+                  <span className={cn("font-semibold text-sm", !email.read ? "text-glow-text-primary" : "text-glow-text-secondary")}>
                     {email.from.name}
                   </span>
                   {/* Attachment indicator */}
                   {email.attachments.length > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-zinc-500" title={`${email.attachments.length} ${lang === 'ru' ? 'вложени' + (email.attachments.length === 1 ? 'е' : 'я') : 'attachment' + (email.attachments.length > 1 ? 's' : '')}`}>
+                    <span className="inline-flex items-center gap-0.5 text-glow-text-muted" title={`${email.attachments.length} ${lang === 'ru' ? 'вложени' + (email.attachments.length === 1 ? 'е' : 'я') : 'attachment' + (email.attachments.length > 1 ? 's' : '')}`}>
                       <Paperclip className="w-3 h-3" />
                       {email.attachments.length > 1 && <span className="text-[10px]">{email.attachments.length}</span>}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-zinc-500" title={new Date(email.date).toLocaleString()}>
+                  <span className="text-xs text-glow-text-muted" title={new Date(email.date).toLocaleString()}>
                     {(() => {
                       const d = new Date(email.date);
                       const now = new Date();
@@ -440,18 +440,18 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                         setTagPickerOpenId(tagPickerOpenId === email.id ? null : email.id);
                         setMenuOpenId(null);
                       }}
-                      className="p-1 -mr-1 rounded-full hover:bg-zinc-800 text-zinc-600 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1 -mr-1 rounded-full hover:bg-glow-surface text-glow-text-muted hover:text-glow-accent transition-colors opacity-0 group-hover:opacity-100"
                       title={t('emailList.addTag', lang)}
                     >
                       <Tag className="w-3.5 h-3.5" />
                     </button>
                     {tagPickerOpenId === email.id && (
                       <div
-                        className="absolute right-0 top-full mt-1 w-44 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-lg overflow-hidden z-50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="p-1.5 flex flex-col max-h-48 overflow-y-auto">
-                          <span className="px-2 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{t('emailList.assignTags', lang)}</span>
+                          <span className="px-2 py-1 text-[10px] font-semibold text-glow-text-muted uppercase tracking-wider">{t('emailList.assignTags', lang)}</span>
                           {settings.availableTags.map(tag => {
                             const isActive = email.tags.includes(tag.name);
                             return (
@@ -460,12 +460,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                                 onClick={() => toggleEmailTag(email.id, tag.name)}
                                 className={cn(
                                   "flex items-center gap-2 text-left px-3 py-1.5 text-xs rounded-lg transition-colors",
-                                  isActive ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                  isActive ? "bg-glow-elevated text-glow-text-primary" : "text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-text-primary"
                                 )}
                               >
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
                                 {tag.name}
-                                {isActive && <span className="ml-auto text-emerald-400 text-[10px]">✓</span>}
+                                {isActive && <span className="ml-auto text-glow-accent text-[10px]">✓</span>}
                               </button>
                             );
                           })}
@@ -478,12 +478,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                       e.stopPropagation();
                       toggleStar(email.id);
                     }}
-                    className="p-1 -mr-1 rounded-full hover:bg-zinc-800 transition-colors"
+                    className="p-1 -mr-1 rounded-full hover:bg-glow-surface transition-colors"
                   >
                     <Star
                       className={cn(
                         "w-4 h-4 transition-all",
-                        email.starred ? "fill-yellow-500 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" : "text-zinc-600"
+                        email.starred ? "fill-glow-priority-medium text-glow-priority-medium drop-shadow-[0_0_8px_rgba(240,192,64,0.5)]" : "text-glow-text-muted"
                       )}
                     />
                   </button>
@@ -495,13 +495,13 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                         setMenuOpenId(menuOpenId === email.id ? null : email.id);
                         setTagPickerOpenId(null);
                       }}
-                      className="p-1 -mr-1 rounded-full hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1 -mr-1 rounded-full hover:bg-glow-surface text-glow-text-muted hover:text-glow-text-secondary transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
                     {menuOpenId === email.id && (
                       <div
-                        className="absolute right-0 top-full mt-1 w-44 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-lg overflow-hidden z-50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="p-1 flex flex-col">
@@ -515,33 +515,33 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                               }
                               setMenuOpenId(null);
                             }}
-                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                           >
                             {email.read ? <Mail className="w-4 h-4" /> : <MailOpen className="w-4 h-4" />}
                             {email.read ? (lang === 'ru' ? 'Непрочитанное' : 'Mark unread') : (lang === 'ru' ? 'Прочитанное' : 'Mark read')}
                           </button>
                           <button
                             onClick={(e) => handleSaveEmail(email, e)}
-                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                           >
                             <Download className="w-4 h-4" />
                             {t('emailList.save', lang)}
                           </button>
                           <button
                             onClick={(e) => handlePrintEmail(email, e)}
-                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                           >
                             <Printer className="w-4 h-4" />
                             {t('emailList.print', lang)}
                           </button>
-                          <div className="h-px bg-zinc-800 my-1" />
+                          <div className="h-px bg-glow-border-default my-1" />
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteEmail(email.id);
                               setMenuOpenId(null);
                             }}
-                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-error hover:bg-glow-error/10 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                             {t('emailList.deleteEmail', lang)}
@@ -556,14 +556,14 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
               <div className="flex items-center gap-2 mb-1">
                 <h3 className={cn(
                   "text-sm flex-1",
-                  !email.read ? "font-bold text-zinc-100" : "font-medium text-zinc-400",
-                  email.starred && "font-bold text-emerald-300"
+                  !email.read ? "font-bold text-glow-text-primary" : "font-medium text-glow-text-secondary",
+                  email.starred && "font-bold text-glow-priority-low"
                 )}>
                   {email.subject}
                 </h3>
               </div>
               
-              <p className="text-sm text-zinc-500 truncate mb-2">
+              <p className="text-sm text-glow-text-muted truncate mb-2">
                 {email.snippet}
               </p>
 
@@ -572,7 +572,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   {email.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-zinc-800/80 text-zinc-400 border border-zinc-700/50"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-glow-surface/80 text-glow-text-secondary border border-glow-border-subtle"
                     >
                       <Tag className="w-2.5 h-2.5" style={{ color: getTagColor(tag) }} />
                       {tag}
@@ -580,7 +580,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   ))}
                   {/* Show attachment names preview on desktop */}
                   {email.attachments.length > 0 && email.attachments.length <= 3 && (
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-zinc-800/60 text-zinc-500 border border-zinc-700/30">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-glow-surface/60 text-glow-text-muted border border-glow-border-subtle/30">
                       <Paperclip className="w-2.5 h-2.5" />
                       {email.attachments.map(a => a.name).join(', ')}
                     </span>
@@ -595,7 +595,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
           {canLoadMore && (
             <div className="p-4 flex flex-col items-center gap-1">
               {isLoadingMore ? (
-                <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
+                <div className="flex items-center gap-2 text-glow-text-muted text-sm py-2">
                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -605,7 +605,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
               ) : (
                 <button
                   onClick={() => loadMoreEmails()}
-                  className="w-full py-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-100 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-lg bg-glow-surface border border-glow-border-default text-glow-text-secondary text-sm font-medium hover:bg-glow-elevated hover:text-glow-text-primary transition-colors flex items-center justify-center gap-2"
                 >
                   <ChevronDownIcon className="w-4 h-4" />
                   {isSearchActive

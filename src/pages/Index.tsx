@@ -91,14 +91,14 @@ function MailApp() {
 
   useEffect(() => {
     if (settings.theme === 'light') {
-      document.documentElement.classList.add('light');
+      document.documentElement.setAttribute('data-theme', 'light');
     } else if (settings.theme === 'dark') {
-      document.documentElement.classList.remove('light');
+      document.documentElement.setAttribute('data-theme', 'dark');
     } else {
       if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.classList.add('light');
+        document.documentElement.setAttribute('data-theme', 'light');
       } else {
-        document.documentElement.classList.remove('light');
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
     }
   }, [settings.theme]);
@@ -138,13 +138,13 @@ function MailApp() {
     // Convert URLs to clickable links
     html = html.replace(
       /https?:\/\/[^\s<>&"')\]]+/g,
-      url => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1a73e8">${url}</a>`
+      url => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#6c8aff">${url}</a>`
     );
 
     // Convert email addresses to mailto links
     html = html.replace(
       /([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g,
-      (email) => `<a href="mailto:${email}" style="color:#1a73e8">${email}</a>`
+      (email) => `<a href="mailto:${email}" style="color:#6c8aff">${email}</a>`
     );
 
     // Convert > quoted lines into styled blockquotes
@@ -163,7 +163,7 @@ function MailApp() {
         currentDepth--;
       }
       while (currentDepth < depth) {
-        result.push('<blockquote style="margin:4px 0;padding:0 12px;border-left:3px solid #ccc;color:#666">');
+        result.push('<blockquote style="margin:4px 0;padding:0 12px;border-left:3px solid #6c8aff;color:#666">');
         currentDepth++;
       }
 
@@ -267,9 +267,9 @@ function MailApp() {
     let cc: any[] = [];
 
     const dateStr = new Date(email.date).toLocaleString();
-    const fromStr = `${email.from.name} &lt;${email.from.email}&gt;`;
-    const toStr = email.to.map(c => `${c.name} &lt;${c.email}&gt;`).join(', ');
-    const ccStr = email.cc?.length ? email.cc.map(c => `${c.name} &lt;${c.email}&gt;`).join(', ') : '';
+    const fromStr = `${email.from.name} <${email.from.email}>`;
+    const toStr = email.to.map(c => `${c.name} <${c.email}>`).join(', ');
+    const ccStr = email.cc?.length ? email.cc.map(c => `${c.name} <${c.email}>`).join(', ') : '';
 
     let quoteHeader = `<p><b>${settings.language === 'ru' ? 'От' : 'From'}:</b> ${fromStr}<br>`;
     quoteHeader += `<b>${settings.language === 'ru' ? 'Кому' : 'To'}:</b> ${toStr}<br>`;
@@ -324,8 +324,8 @@ function MailApp() {
           hasPrev={hasPrev}
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full">
-          <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(255,255,255,0.02)]">
+        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full">
+          <div className="w-16 h-16 bg-glow-surface rounded-full flex items-center justify-center mb-4 shadow-glow">
             <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -354,9 +354,9 @@ function MailApp() {
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
                 <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
               </ResizablePanel>
-              <ResizableHandle withHandle className="bg-zinc-800/50 hover:bg-emerald-500/30 transition-colors data-[resize-handle-active]:bg-emerald-500/50" />
+              <ResizableHandle withHandle className="bg-glow-border-subtle hover:bg-glow-accent/30 transition-colors data-[resize-handle-active]:bg-glow-accent/50" />
               <ResizablePanel defaultSize={65} minSize={40}>
-                <div className="h-full flex flex-col bg-zinc-950 relative">
+                <div className="h-full flex flex-col bg-glow-primary relative">
                   {renderEmailDetail()}
                 </div>
               </ResizablePanel>
@@ -366,9 +366,9 @@ function MailApp() {
               <ResizablePanel defaultSize={40} minSize={20} maxSize={70}>
                 <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
               </ResizablePanel>
-              <ResizableHandle withHandle className="bg-zinc-800/50 hover:bg-emerald-500/30 transition-colors data-[resize-handle-active]:bg-emerald-500/50" />
+              <ResizableHandle withHandle className="bg-glow-border-subtle hover:bg-glow-accent/30 transition-colors data-[resize-handle-active]:bg-glow-accent/50" />
               <ResizablePanel defaultSize={60} minSize={25}>
-                <div className="h-full flex flex-col bg-zinc-950 relative">
+                <div className="h-full flex flex-col bg-glow-primary relative">
                   {renderEmailDetail()}
                 </div>
               </ResizablePanel>
@@ -429,14 +429,15 @@ const Index = () => {
         position="bottom-center"
         toastOptions={{
           style: {
-            background: 'hsl(var(--zinc-900))',
-            color: 'hsl(var(--zinc-100))',
-            border: '1px solid hsl(var(--zinc-800))',
+            background: 'var(--bg-elevated)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--glow-modal)',
           },
           success: {
             iconTheme: {
-              primary: 'hsl(var(--primary))',
-              secondary: 'hsl(var(--zinc-900))',
+              primary: 'var(--accent-primary)',
+              secondary: 'var(--bg-elevated)',
             },
           },
         }}

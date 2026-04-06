@@ -163,14 +163,14 @@ export const EmailDetail: React.FC<{
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-      className="absolute inset-0 bg-zinc-950 z-20 flex flex-col h-full overflow-hidden"
+      className="absolute inset-0 bg-glow-primary z-20 flex flex-col h-full overflow-hidden"
     >
       {/* Top Bar */}
-      <header className="h-14 border-b border-zinc-800/50 flex items-center justify-between px-3 bg-zinc-950/80 backdrop-blur-md shrink-0">
+      <header className="h-14 border-b border-glow-border-default/50 flex items-center justify-between px-3 bg-glow-primary/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-1">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 rounded-full hover:bg-zinc-800 transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-glow-elevated transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -179,7 +179,7 @@ export const EmailDetail: React.FC<{
             <button
               onClick={onPrev}
               disabled={!hasPrev}
-              className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title={lang === 'ru' ? 'Предыдущее (k)' : 'Previous (k)'}
             >
               <ChevronUp className="w-4 h-4" />
@@ -187,42 +187,42 @@ export const EmailDetail: React.FC<{
             <button
               onClick={onNext}
               disabled={!hasNext}
-              className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title={lang === 'ru' ? 'Следующее (j)' : 'Next (j)'}
             >
               <ChevronDown className="w-4 h-4" />
             </button>
           </div>
-          <div className="w-px h-5 bg-zinc-800 mx-1 hidden sm:block" />
+          <div className="w-px h-5 bg-glow-border-default mx-1 hidden sm:block" />
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => toggleStar(email.id)}
-              className="p-1.5 rounded-full hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-full hover:bg-glow-elevated transition-colors"
             >
               <Star
                 className={cn(
                   "w-4 h-4 transition-all",
-                  email.starred ? "fill-yellow-500 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" : "text-zinc-400"
+                  email.starred ? "fill-yellow-500 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" : "text-glow-text-muted"
                 )}
               />
             </button>
             <button
               onClick={() => { email.read ? markAsUnread(email.id) : markAsRead(email.id); }}
-              className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
+              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-glow-accent transition-colors"
               title={email.read ? (lang === 'ru' ? 'Отметить непрочитанным (u)' : 'Mark unread (u)') : (lang === 'ru' ? 'Отметить прочитанным' : 'Mark read')}
             >
               {email.read ? <Mail className="w-4 h-4" /> : <MailOpen className="w-4 h-4" />}
             </button>
             <button
               onClick={handleSave}
-              className="hidden sm:block p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
+              className="hidden sm:block p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-glow-accent transition-colors"
               title={t('emailDetail.saveEmail', lang)}
             >
               <Download className="w-4 h-4" />
             </button>
             <button
               onClick={handlePrint}
-              className="hidden sm:block p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
+              className="hidden sm:block p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-glow-accent transition-colors"
               title={t('emailDetail.print', lang)}
             >
               <Printer className="w-4 h-4" />
@@ -232,7 +232,7 @@ export const EmailDetail: React.FC<{
                 deleteEmail(email.id);
                 onBack();
               }}
-              className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
+              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-red-400 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -241,13 +241,13 @@ export const EmailDetail: React.FC<{
           <div className="relative ml-1 hidden sm:block">
             <button
               onClick={() => setShowTagPicker(!showTagPicker)}
-              className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
+              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-secondary hover:text-glow-accent transition-colors"
               title={t('compose.tagsLabel', lang)}
             >
               <Tag className="w-4 h-4" />
             </button>
             {showTagPicker && (
-              <div className="absolute left-0 top-full mt-1 w-44 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute left-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50">
                 <div className="p-1.5 flex flex-col max-h-52 overflow-y-auto">
                   {settings.availableTags.map(tag => {
                     const isActive = email.tags.includes(tag.name);
@@ -262,12 +262,12 @@ export const EmailDetail: React.FC<{
                         }}
                         className={cn(
                           "flex items-center gap-2 text-left px-3 py-1.5 text-xs rounded-lg transition-colors",
-                          isActive ? "bg-zinc-800 text-emerald-400" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                          isActive ? "bg-glow-elevated text-glow-accent" : "text-glow-text-muted hover:bg-glow-elevated hover:text-glow-text-primary"
                         )}
                       >
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
                         {tag.name}
-                        {isActive && <span className="ml-auto text-emerald-400">✓</span>}
+                        {isActive && <span className="ml-auto text-glow-accent">✓</span>}
                       </button>
                     );
                   })}
@@ -280,7 +280,7 @@ export const EmailDetail: React.FC<{
           {email.folderId === 'drafts' && onEditDraft && (
             <button
               onClick={() => onEditDraft(email)}
-              className="px-3 py-1.5 mr-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors flex items-center gap-2 text-sm font-medium"
+              className="px-3 py-1.5 mr-2 rounded-lg bg-glow-accent/10 text-glow-accent hover:bg-glow-accent/20 transition-colors flex items-center gap-2 text-sm font-medium"
             >
               <Edit3 className="w-4 h-4" />
               <span className="hidden sm:inline">{t('emailDetail.editFurther', lang)}</span>
@@ -288,21 +288,21 @@ export const EmailDetail: React.FC<{
           )}
           <button
             onClick={() => onReply('reply', email)}
-            className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+            className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-secondary transition-colors"
             title={`${lang === 'ru' ? 'Ответить' : 'Reply'} (r)`}
           >
             <Reply className="w-5 h-5" />
           </button>
           <button
             onClick={() => onReply('replyAll', email)}
-            className="hidden sm:block p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+            className="hidden sm:block p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
             title={`${lang === 'ru' ? 'Ответить всем' : 'Reply All'} (a)`}
           >
             <ReplyAll className="w-5 h-5" />
           </button>
           <button
             onClick={() => onReply('forward', email)}
-            className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+            className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
             title={`${lang === 'ru' ? 'Переслать' : 'Forward'} (f)`}
           >
             <Forward className="w-5 h-5" />
@@ -311,33 +311,33 @@ export const EmailDetail: React.FC<{
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+              className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
               title={t('emailDetail.moreActions', lang)}
             >
               <MoreVertical className="w-5 h-5" />
             </button>
             {showMoreMenu && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50">
                 <div className="p-1 flex flex-col">
                   <button
                     onClick={() => { handleSave(); setShowMoreMenu(false); }}
-                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     {t('emailList.save', lang)}
                   </button>
                   <button
                     onClick={() => { handlePrint(); setShowMoreMenu(false); }}
-                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <Printer className="w-4 h-4" />
                     {t('emailList.print', lang)}
                   </button>
-                  <div className="h-px bg-zinc-800 my-1" />
+                  <div className="h-px bg-glow-elevated my-1" />
                   {/* Copy email address */}
                   <button
                     onClick={() => { copyToClipboard(email.from.email, 'Email'); setShowMoreMenu(false); }}
-                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <ClipboardCopy className="w-4 h-4" />
                     {lang === 'ru' ? 'Копировать адрес' : 'Copy email address'}
@@ -346,7 +346,7 @@ export const EmailDetail: React.FC<{
                   {email.headers.messageId && (
                     <button
                       onClick={() => { copyToClipboard(email.headers.messageId, 'Message-ID'); setShowMoreMenu(false); }}
-                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                     >
                       <Code className="w-4 h-4" />
                       {lang === 'ru' ? 'Копировать Message-ID' : 'Copy Message-ID'}
@@ -355,22 +355,22 @@ export const EmailDetail: React.FC<{
                   {/* Show raw source */}
                   <button
                     onClick={() => { setShowRawSource(!showRawSource); setShowMoreMenu(false); }}
-                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                    className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                     {lang === 'ru' ? (showRawSource ? 'Скрыть исходник' : 'Показать исходник') : (showRawSource ? 'Hide source' : 'Show source')}
                   </button>
-                  <div className="h-px bg-zinc-800 my-1" />
+                  <div className="h-px bg-glow-elevated my-1" />
                   <div className="relative">
                     <button
                       onClick={() => { setShowMovePicker(!showMovePicker); setShowCopyPicker(false); }}
-                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors w-full"
+                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors w-full"
                     >
                       <FolderInput className="w-4 h-4" />
                       {lang === 'ru' ? 'Переместить' : 'Move to'}
                     </button>
                     {showMovePicker && (
-                      <div className="absolute right-full top-0 mr-1 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50 max-h-60 overflow-y-auto">
+                      <div className="absolute right-full top-0 mr-1 w-48 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50 max-h-60 overflow-y-auto">
                         <div className="p-1 flex flex-col">
                           {allFoldersFlat.filter(f => f.id !== currentFolder).map(f => (
                             <button
@@ -381,7 +381,7 @@ export const EmailDetail: React.FC<{
                                 setShowMovePicker(false);
                                 onBack();
                               }}
-                              className="flex items-center gap-2 text-left px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                              className="flex items-center gap-2 text-left px-3 py-1.5 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                             >
                               {translateFolderName(f.id, f.name, lang)}
                             </button>
@@ -393,13 +393,13 @@ export const EmailDetail: React.FC<{
                   <div className="relative">
                     <button
                       onClick={() => { setShowCopyPicker(!showCopyPicker); setShowMovePicker(false); }}
-                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors w-full"
+                      className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors w-full"
                     >
                       <Copy className="w-4 h-4" />
                       {lang === 'ru' ? 'Копировать' : 'Copy to'}
                     </button>
                     {showCopyPicker && (
-                      <div className="absolute right-full top-0 mr-1 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50 max-h-60 overflow-y-auto">
+                      <div className="absolute right-full top-0 mr-1 w-48 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50 max-h-60 overflow-y-auto">
                         <div className="p-1 flex flex-col">
                           {allFoldersFlat.filter(f => f.id !== currentFolder).map(f => (
                             <button
@@ -409,7 +409,7 @@ export const EmailDetail: React.FC<{
                                 setShowMoreMenu(false);
                                 setShowCopyPicker(false);
                               }}
-                              className="flex items-center gap-2 text-left px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-emerald-400 rounded-lg transition-colors"
+                              className="flex items-center gap-2 text-left px-3 py-1.5 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                             >
                               {translateFolderName(f.id, f.name, lang)}
                             </button>
@@ -430,7 +430,7 @@ export const EmailDetail: React.FC<{
         <div className="max-w-3xl mx-auto">
           {/* External sender warning */}
           {isExternalSender && (
-            <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/5 border border-yellow-500/20 text-xs text-[#d3980d]">
+            <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-glow-warning/5 border border-glow-warning/20 text-xs text-[#d3980d]">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
               {lang === 'ru' ? `Внешний отправитель (${senderDomain})` : `External sender (${senderDomain})`}
             </div>
@@ -442,7 +442,7 @@ export const EmailDetail: React.FC<{
                 <AlertTriangle className="w-4 h-4" />
               </div>
             )}
-            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight flex-1">
+            <h1 className="text-2xl font-bold text-glow-text-primary tracking-tight flex-1">
               {email.subject}
             </h1>
           </div>
@@ -454,7 +454,7 @@ export const EmailDetail: React.FC<{
                 <span className={cn(
                   "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border",
                   verifyResult?.verified === true || email.cryptoInfo.verified === true
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    ? "bg-glow-accent/10 border-glow-accent/30 text-glow-accent"
                     : verifyResult?.verified === false || email.cryptoInfo.verified === false
                       ? "bg-red-500/10 border-red-500/30 text-red-400"
                       : "bg-blue-500/10 border-blue-500/30 text-blue-400"
@@ -490,7 +490,7 @@ export const EmailDetail: React.FC<{
                     }
                   }}
                   disabled={verifying}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-zinc-800/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-700/50 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-glow-elevated/50 border-glow-border-subtle/50 text-glow-text-primary hover:bg-glow-elevated/50 transition-colors disabled:opacity-50"
                 >
                   {verifying ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
                   {lang === 'ru' ? 'Проверить подпись' : 'Verify'}
@@ -504,33 +504,33 @@ export const EmailDetail: React.FC<{
 
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-zinc-950 font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-glow-accent to-cyan-500 flex items-center justify-center text-glow-primary font-bold shadow-glow-accent">
                 {email.from.name.charAt(0).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-zinc-100">{email.from.name}</span>
+                  <span className="font-semibold text-glow-text-primary">{email.from.name}</span>
                   <button
                     onClick={() => copyToClipboard(email.from.email, 'Email')}
-                    className="text-sm text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                    className="text-sm text-glow-text-secondary hover:text-glow-accent transition-colors cursor-pointer"
                     title={lang === 'ru' ? 'Копировать адрес' : 'Copy address'}
                   >
                     &lt;{email.from.email}&gt;
                   </button>
-                  <span className="hidden md:inline text-sm text-zinc-500">
+                  <span className="hidden md:inline text-sm text-glow-text-secondary">
                     {format(new Date(email.date), 'MMM d, yyyy, h:mm a')}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                <div className="flex items-center gap-2 text-xs text-glow-text-secondary mt-0.5">
                   <span>to {email.to.map((t) => t.name).join(', ')}</span>
                   <button
                     onClick={() => setShowHeaders(!showHeaders)}
-                    className="hover:text-emerald-400 transition-colors hover:underline"
+                    className="hover:text-glow-accent transition-colors hover:underline"
                   >
                     {showHeaders ? t('emailDetail.hideDetails', lang) : t('emailDetail.showDetails', lang)}
                   </button>
                 </div>
-                <span className="md:hidden text-xs text-zinc-500 mt-1 block">
+                <span className="md:hidden text-xs text-glow-text-secondary mt-1 block">
                   {format(new Date(email.date), 'MMM d, yyyy, h:mm a')}
                 </span>
               </div>
@@ -545,61 +545,61 @@ export const EmailDetail: React.FC<{
                 exit={{ height: 0, opacity: 0 }}
                 className="mb-8 overflow-hidden"
               >
-                <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-400 space-y-2">
+                <div className="p-4 bg-glow-surface/50 border border-glow-border-default rounded-xl text-xs font-mono text-glow-text-muted space-y-2">
                   <div className="grid grid-cols-[100px_1fr] gap-2">
-                    <span className="text-zinc-500">From:</span>
+                    <span className="text-glow-text-secondary">From:</span>
                     <span>{email.from.name} &lt;{email.from.email}&gt;</span>
                   </div>
                   <div className="grid grid-cols-[100px_1fr] gap-2">
-                    <span className="text-zinc-500">To:</span>
+                    <span className="text-glow-text-secondary">To:</span>
                     <span>{email.to.map((t) => `${t.name} <${t.email}>`).join(', ')}</span>
                   </div>
                   {email.cc && email.cc.length > 0 && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">Cc:</span>
+                      <span className="text-glow-text-secondary">Cc:</span>
                       <span>{email.cc.map((t) => `${t.name} <${t.email}>`).join(', ')}</span>
                     </div>
                   )}
                   {email.bcc && email.bcc.length > 0 && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">Bcc:</span>
+                      <span className="text-glow-text-secondary">Bcc:</span>
                       <span>{email.bcc.map((t) => `${t.name} <${t.email}>`).join(', ')}</span>
                     </div>
                   )}
                   <div className="grid grid-cols-[100px_1fr] gap-2">
-                    <span className="text-zinc-500">Date:</span>
+                    <span className="text-glow-text-secondary">Date:</span>
                     <span>{new Date(email.date).toString()}</span>
                   </div>
                   <div className="grid grid-cols-[100px_1fr] gap-2">
-                    <span className="text-zinc-500">Message-ID:</span>
+                    <span className="text-glow-text-secondary">Message-ID:</span>
                     <span className="flex items-center gap-1">
                       <span className="break-all">{email.headers.messageId}</span>
-                      <button onClick={() => copyToClipboard(email.headers.messageId, 'Message-ID')} className="p-0.5 hover:text-emerald-400 shrink-0">
+                      <button onClick={() => copyToClipboard(email.headers.messageId, 'Message-ID')} className="p-0.5 hover:text-glow-accent shrink-0">
                         <ClipboardCopy className="w-3 h-3" />
                       </button>
                     </span>
                   </div>
                   {email.headers.inReplyTo && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">In-Reply-To:</span>
+                      <span className="text-glow-text-secondary">In-Reply-To:</span>
                       <span className="break-all">{email.headers.inReplyTo}</span>
                     </div>
                   )}
                   {email.headers.references && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">References:</span>
+                      <span className="text-glow-text-secondary">References:</span>
                       <span className="break-all">{email.headers.references}</span>
                     </div>
                   )}
                   {email.headers.returnPath && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">Return-Path:</span>
+                      <span className="text-glow-text-secondary">Return-Path:</span>
                       <span>{email.headers.returnPath}</span>
                     </div>
                   )}
                   {email.headers.received && email.headers.received.length > 0 && (
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-zinc-500">Received:</span>
+                      <span className="text-glow-text-secondary">Received:</span>
                       <div className="space-y-1">
                         {email.headers.received.map((r, i) => (
                           <div key={i} className="text-[11px] break-all">{r}</div>
@@ -621,18 +621,18 @@ export const EmailDetail: React.FC<{
                 exit={{ height: 0, opacity: 0 }}
                 className="mb-8 overflow-hidden"
               >
-                <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+                <div className="p-4 bg-glow-surface/80 border border-glow-border-default rounded-xl">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-zinc-400">{lang === 'ru' ? 'Исходный HTML' : 'Raw HTML Source'}</span>
+                    <span className="text-xs font-semibold text-glow-text-muted">{lang === 'ru' ? 'Исходный HTML' : 'Raw HTML Source'}</span>
                     <button
                       onClick={() => copyToClipboard(email.body, 'Source')}
-                      className="text-xs text-zinc-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                      className="text-xs text-glow-text-secondary hover:text-glow-accent flex items-center gap-1 transition-colors"
                     >
                       <ClipboardCopy className="w-3 h-3" />
                       {lang === 'ru' ? 'Копировать' : 'Copy'}
                     </button>
                   </div>
-                  <pre className="text-xs text-zinc-400 font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                  <pre className="text-xs text-glow-text-muted font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                     {email.body}
                   </pre>
                 </div>
@@ -645,7 +645,7 @@ export const EmailDetail: React.FC<{
               {email.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-zinc-900 border border-zinc-800 text-zinc-300"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-glow-surface border border-glow-border-default text-glow-text-primary"
                 >
                   <Tag className="w-3 h-3" style={{ color: getTagColor(tag), filter: `drop-shadow(0 0 5px ${getTagColor(tag)}80)` }} />
                   {tag}
@@ -659,28 +659,28 @@ export const EmailDetail: React.FC<{
             const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(body);
             if (hasHtmlTags) {
               return (
-                <div className="rounded-xl overflow-hidden border border-zinc-800/50 shadow-sm">
+                <div className="rounded-xl overflow-hidden border border-glow-border-default/50 shadow-sm">
                   <EmailHtmlViewer html={body} />
                 </div>
               );
             }
             if (body.trim()) {
               return (
-                <div className="rounded-xl overflow-hidden border border-zinc-800/50 shadow-sm">
+                <div className="rounded-xl overflow-hidden border border-glow-border-default/50 shadow-sm">
                   <EmailTextViewer text={body} />
                 </div>
               );
             }
             return (
-              <p className="text-zinc-500 text-sm italic">
+              <p className="text-glow-text-secondary text-sm italic">
                 {settings.language === 'ru' ? 'Письмо загружается....Оставайтесь на связи' : 'Email is loading....Stay tuned'}
               </p>
             );
           })()}
 
           {email.attachments.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-zinc-800/50">
-              <h3 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
+            <div className="mt-12 pt-8 border-t border-glow-border-default/50">
+              <h3 className="text-sm font-medium text-glow-text-muted mb-4 flex items-center gap-2">
                 <Paperclip className="w-4 h-4" />
                 {t('emailDetail.attachments', lang)} ({email.attachments.length})
               </h3>
@@ -692,17 +692,17 @@ export const EmailDetail: React.FC<{
                   return (
                     <div
                       key={att.id}
-                      className="group relative flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/80 transition-all overflow-hidden cursor-pointer"
+                      className="group relative flex flex-col rounded-xl border border-glow-border-default bg-glow-surface/30 hover:bg-glow-surface/80 transition-all overflow-hidden cursor-pointer"
                     >
-                      <div className="h-32 bg-zinc-900/50 border-b border-zinc-800/50 flex items-center justify-center relative overflow-hidden">
+                      <div className="h-32 bg-glow-surface/50 border-b border-glow-border-default/50 flex items-center justify-center relative overflow-hidden">
                         {isImage ? (
-                          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-zinc-600" />
+                          <div className="absolute inset-0 bg-glow-elevated flex items-center justify-center">
+                            <ImageIcon className="w-8 h-8 text-glow-text-muted" />
                           </div>
                         ) : isPdf ? (
                           <FileText className="w-10 h-10 text-red-400/80" />
                         ) : (
-                          <File className="w-10 h-10 text-zinc-500" />
+                          <File className="w-10 h-10 text-glow-text-secondary" />
                         )}
                         
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
@@ -737,7 +737,7 @@ export const EmailDetail: React.FC<{
                                 }
                               }
                             }}
-                            className="p-2 bg-zinc-900/80 rounded-full text-zinc-200 hover:text-emerald-400 hover:scale-110 transition-all shadow-lg"
+                            className="p-2 bg-glow-surface/80 rounded-full text-glow-text-primary hover:text-glow-accent hover:scale-110 transition-all shadow-lg"
                             title={lang === 'ru' ? 'Скачать' : 'Download'}
                           >
                             {downloadingAttId === att.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
@@ -758,7 +758,7 @@ export const EmailDetail: React.FC<{
                                 setTmhFolderPrompt({ attId: att.id, folder: tmh.defaultFolder || '' });
                               }}
                               disabled={tmhSendingId === att.id}
-                              className="p-2 bg-zinc-900/80 rounded-full text-zinc-200 hover:text-orange-400 hover:scale-110 transition-all shadow-lg disabled:opacity-50"
+                              className="p-2 bg-glow-surface/80 rounded-full text-glow-text-primary hover:text-orange-400 hover:scale-110 transition-all shadow-lg disabled:opacity-50"
                               title={t('tmh.sendToTmh', lang)}
                             >
                               {tmhSendingId === att.id ? (
@@ -773,11 +773,11 @@ export const EmailDetail: React.FC<{
                       
                       <div className="p-3 flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-200 truncate" title={att.name}>{att.name}</p>
+                          <p className="text-sm font-medium text-glow-text-primary truncate" title={att.name}>{att.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-zinc-500 uppercase tracking-wider">{att.type.split('/')[1] || 'FILE'}</span>
-                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                            <span className="text-xs text-zinc-500">{(att.size / 1024).toFixed(1)} KB</span>
+                            <span className="text-xs text-glow-text-secondary uppercase tracking-wider">{att.type.split('/')[1] || 'FILE'}</span>
+                            <span className="w-1 h-1 rounded-full bg-glow-border-default" />
+                            <span className="text-xs text-glow-text-secondary">{(att.size / 1024).toFixed(1)} KB</span>
                           </div>
                         </div>
                       </div>
@@ -790,11 +790,11 @@ export const EmailDetail: React.FC<{
 
           {/* AI Quick Replies */}
           {settings.aiEnabled && email.folderId !== 'drafts' && email.folderId !== 'sent' && (
-            <div className="mt-12 pt-8 border-t border-zinc-800/50">
-              <h3 className="text-sm font-medium text-emerald-400 mb-4 flex items-center gap-2">
+            <div className="mt-12 pt-8 border-t border-glow-border-default/50">
+              <h3 className="text-sm font-medium text-glow-accent mb-4 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 {t('emailDetail.aiReplies', lang)}
-                {isGeneratingReplies && <Loader2 className="w-3 h-3 animate-spin text-emerald-500/50" />}
+                {isGeneratingReplies && <Loader2 className="w-3 h-3 animate-spin text-glow-accent/50" />}
               </h3>
               <div className="flex flex-wrap gap-3">
                 {quickReplies.map((reply, index) => (
@@ -803,13 +803,13 @@ export const EmailDetail: React.FC<{
                     onClick={() => {
                       onReply('reply', email, reply);
                     }}
-                    className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-zinc-300 hover:text-emerald-400 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                    className="px-4 py-2 bg-glow-surface/50 border border-glow-border-default hover:border-glow-accent/50 hover:bg-glow-accent/10 text-glow-text-primary hover:text-glow-accent rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-glow-accent"
                   >
                     {reply}
                   </button>
                 ))}
                 {!isGeneratingReplies && quickReplies.length === 0 && (
-                  <span className="text-sm text-zinc-500">{t('emailDetail.generating', lang)}</span>
+                  <span className="text-sm text-glow-text-secondary">{t('emailDetail.generating', lang)}</span>
                 )}
               </div>
             </div>
@@ -818,24 +818,24 @@ export const EmailDetail: React.FC<{
       </div>
 
       {/* Mobile next/prev bar */}
-      <div className="sm:hidden h-12 border-t border-zinc-800/50 flex items-center justify-between px-4 bg-zinc-950 shrink-0">
+      <div className="sm:hidden h-12 border-t border-glow-border-default/50 flex items-center justify-between px-4 bg-glow-primary shrink-0">
         <button
           onClick={onPrev}
           disabled={!hasPrev}
-          className="flex items-center gap-1 text-sm text-zinc-400 disabled:opacity-30"
+          className="flex items-center gap-1 text-sm text-glow-text-muted disabled:opacity-30"
         >
           <ChevronUp className="w-4 h-4" />
           {lang === 'ru' ? 'Пред.' : 'Prev'}
         </button>
         <div className="flex items-center gap-2">
-          <button onClick={() => onReply('replyAll', email)} className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400">
+          <button onClick={() => onReply('replyAll', email)} className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted">
             <ReplyAll className="w-4 h-4" />
           </button>
         </div>
         <button
           onClick={onNext}
           disabled={!hasNext}
-          className="flex items-center gap-1 text-sm text-zinc-400 disabled:opacity-30"
+          className="flex items-center gap-1 text-sm text-glow-text-muted disabled:opacity-30"
         >
           {lang === 'ru' ? 'След.' : 'Next'}
           <ChevronDown className="w-4 h-4" />
@@ -857,9 +857,9 @@ export const EmailDetail: React.FC<{
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-zinc-900 border border-zinc-700 rounded-xl p-5 w-80 shadow-2xl"
+              className="bg-glow-surface border border-glow-border-subtle rounded-xl p-5 w-80 shadow-glow-modal"
             >
-              <h3 className="text-sm font-semibold text-zinc-200 mb-3">
+              <h3 className="text-sm font-semibold text-glow-text-primary mb-3">
                 {lang === 'ru' ? 'Папка в Tiger Hub' : 'Tiger Hub Folder'}
               </h3>
               <input
@@ -867,13 +867,13 @@ export const EmailDetail: React.FC<{
                 value={tmhFolderPrompt.folder}
                 onChange={(e) => setTmhFolderPrompt({ ...tmhFolderPrompt, folder: e.target.value })}
                 placeholder={lang === 'ru' ? 'Папка (пусто = корень)' : 'Folder (empty = root)'}
-                className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-orange-500 mb-4"
+                className="w-full bg-glow-elevated border border-glow-border-default rounded-lg px-3 py-2 text-sm text-glow-text-primary placeholder:text-glow-text-secondary focus:outline-none focus:ring-1 focus:ring-orange-500 mb-4"
                 autoFocus
               />
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setTmhFolderPrompt(null)}
-                  className="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="px-3 py-1.5 text-sm text-glow-text-muted hover:text-glow-text-primary transition-colors"
                 >
                   {lang === 'ru' ? 'Отмена' : 'Cancel'}
                 </button>
