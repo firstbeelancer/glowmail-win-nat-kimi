@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:8080",
-    "beforeDevCommand": "cmd /c set VITE_BACKEND_PROVIDER=native&& npm run dev",
-    "beforeBuildCommand": "cmd /c set VITE_BACKEND_PROVIDER=native&& npm run build"
+    "beforeDevCommand": "VITE_BACKEND_PROVIDER=native npm run dev",
+    "beforeBuildCommand": "VITE_BACKEND_PROVIDER=native npm run build"
   },
   "app": {
     "windows": [
