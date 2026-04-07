@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MailProvider, useMail } from '../store';
 import { Layout } from '../components/glowmail/Layout';
 import { EmailList } from '../components/glowmail/EmailList';
@@ -26,6 +26,7 @@ function MailApp() {
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [composeData, setComposeData] = useState<Partial<Email> | null>(null);
   const { markAsRead, settings, sendEmail, saveDraft, currentFolder, emails, upsertLocalEmail } = useMail();
+  const emailLoadRequestIdRef = useRef(0);
 
   // Get sorted email list for next/prev navigation
   const folderEmails = emails.filter(e => e.folderId === currentFolder)
@@ -207,8 +208,31 @@ function MailApp() {
       : '<p style="opacity:0.7">Email is loading... Stay tuned</p>';
   };
 
+  const normalizeRenderableEmail = (email: Email): Email => {
+    const fromEmail = typeof email.from?.email === 'string' ? email.from.email.trim() : '';
+    const fromName = typeof email.from?.name === 'string' ? email.from.name.trim() : '';
+    const subject = typeof email.subject === 'string' ? email.subject.trim() : '';
+    const snippet = typeof email.snippet === 'string' ? email.snippet : '';
+    const body = typeof email.body === 'string' ? email.body : '';
+
+    return {
+      ...email,
+      from: {
+        ...email.from,
+        id: fromEmail || fromName || 'unknown',
+        name: fromName || fromEmail || '(Unknown)',
+        email: fromEmail,
+      },
+      subject: subject || '(No Subject)',
+      snippet,
+      body,
+    };
+  };
+
   const handleSelectEmail = async (email: Email) => {
-    setSelectedEmail(email);
+    const requestId = ++emailLoadRequestIdRef.current;
+    const normalizedEmail = normalizeRenderableEmail(email);
+    setSelectedEmail(normalizedEmail);
     const delay = settings.markAsReadDelay ?? 0;
     if (delay > 0) {
       setTimeout(() => markAsRead(email.id), delay * 1000);
@@ -217,17 +241,17 @@ function MailApp() {
     }
 
     // Fetch full body from IMAP if not already loaded
-    if (!email.body) {
+    if (!normalizedEmail.body) {
       try {
         const creds = await loadCredentials();
         if (creds && await desktopCache.isDesktopRuntime()) {
           const cached = await desktopCache.getCachedEmailDetail(creds.email, currentFolder, email.id);
-          if (cached?.body) {
-            const enrichedCached = {
-              ...email,
+          if (cached?.body && emailLoadRequestIdRef.current === requestId) {
+            const enrichedCached = normalizeRenderableEmail({
+              ...normalizedEmail,
               ...cached,
               read: true,
-            };
+            });
             upsertLocalEmail(enrichedCached);
             setSelectedEmail(enrichedCached);
             return;
@@ -235,6 +259,9 @@ function MailApp() {
         }
 
         const full = await mailApi.fetchEmailBody(currentFolder, Number(email.id));
+        if (emailLoadRequestIdRef.current !== requestId) {
+          return;
+        }
         
         // Map attachments from fetch response
         const fetchedAttachments = (full.attachments || []).map((att: any, i: number) => ({
@@ -245,51 +272,63 @@ function MailApp() {
           url: att.contentBase64 ? `data:${att.type || 'application/octet-stream'};base64,${att.contentBase64}` : '',
         }));
 
-        const enriched = {
-          ...email,
+        const enriched = normalizeRenderableEmail({
+          ...normalizedEmail,
           body: buildRenderableEmailBody(full),
           read: true,
-          attachments: fetchedAttachments.length > 0 ? fetchedAttachments : email.attachments,
+          attachments: fetchedAttachments.length > 0 ? fetchedAttachments : normalizedEmail.attachments,
           cryptoInfo: full.cryptoInfo || undefined,
-        };
+        });
         upsertLocalEmail(enriched);
         setSelectedEmail(enriched);
       } catch (e) {
         console.error('Failed to fetch email body:', e);
+        if (emailLoadRequestIdRef.current === requestId) {
+          setSelectedEmail((current) => {
+            if (!current || current.id !== email.id || current.body) return current;
+            return {
+              ...current,
+              body: settings.language === 'ru'
+                ? '<p style="opacity:0.7">Не удалось загрузить письмо. Попробуй открыть его ещё раз.</p>'
+                : '<p style="opacity:0.7">Failed to load email. Try opening it again.</p>',
+            };
+          });
+        }
       }
     }
   };
 
   const handleReply = (type: 'reply' | 'replyAll' | 'forward', email: Email, quickReplyText?: string) => {
+    const normalizedEmail = normalizeRenderableEmail(email);
     const myEmail = settings.account.email;
-    let subject = email.subject;
+    let subject = normalizedEmail.subject;
     let to: any[] = [];
     let cc: any[] = [];
 
-    const dateStr = new Date(email.date).toLocaleString();
-    const fromStr = `${email.from.name} <${email.from.email}>`;
-    const toStr = email.to.map(c => `${c.name} <${c.email}>`).join(', ');
-    const ccStr = email.cc?.length ? email.cc.map(c => `${c.name} <${c.email}>`).join(', ') : '';
+    const dateStr = new Date(normalizedEmail.date).toLocaleString();
+    const fromStr = `${normalizedEmail.from.name} <${normalizedEmail.from.email}>`;
+    const toStr = normalizedEmail.to.map(c => `${c.name} <${c.email}>`).join(', ');
+    const ccStr = normalizedEmail.cc?.length ? normalizedEmail.cc.map(c => `${c.name} <${c.email}>`).join(', ') : '';
 
     let quoteHeader = `<p><b>${settings.language === 'ru' ? 'От' : 'From'}:</b> ${fromStr}<br>`;
     quoteHeader += `<b>${settings.language === 'ru' ? 'Кому' : 'To'}:</b> ${toStr}<br>`;
     if (ccStr) quoteHeader += `<b>${settings.language === 'ru' ? 'Копия' : 'Cc'}:</b> ${ccStr}<br>`;
     quoteHeader += `<b>${settings.language === 'ru' ? 'Дата' : 'Date'}:</b> ${dateStr}<br>`;
-    quoteHeader += `<b>${settings.language === 'ru' ? 'Тема' : 'Subject'}:</b> ${email.subject}</p>`;
+    quoteHeader += `<b>${settings.language === 'ru' ? 'Тема' : 'Subject'}:</b> ${normalizedEmail.subject}</p>`;
 
     const body = quickReplyText
-      ? `<p>${quickReplyText}</p><br><br><hr>${quoteHeader}<blockquote>${email.body}</blockquote>`
-      : `<br><br><hr>${quoteHeader}<blockquote>${email.body}</blockquote>`;
+      ? `<p>${quickReplyText}</p><br><br><hr>${quoteHeader}<blockquote>${normalizedEmail.body}</blockquote>`
+      : `<br><br><hr>${quoteHeader}<blockquote>${normalizedEmail.body}</blockquote>`;
 
     if (type === 'reply') {
       subject = subject.startsWith('Re:') ? subject : `Re: ${subject}`;
-      to = [email.from];
+      to = [normalizedEmail.from];
     } else if (type === 'replyAll') {
       subject = subject.startsWith('Re:') ? subject : `Re: ${subject}`;
-      to = [email.from, ...email.to].filter(
+      to = [normalizedEmail.from, ...normalizedEmail.to].filter(
         (c, index, self) => index === self.findIndex((t) => t.email === c.email) && c.email.toLowerCase() !== myEmail.toLowerCase()
       );
-      cc = (email.cc || []).filter(c => c.email.toLowerCase() !== myEmail.toLowerCase());
+      cc = (normalizedEmail.cc || []).filter(c => c.email.toLowerCase() !== myEmail.toLowerCase());
     } else if (type === 'forward') {
       subject = subject.startsWith('Fwd:') ? subject : `Fwd: ${subject}`;
       to = [];

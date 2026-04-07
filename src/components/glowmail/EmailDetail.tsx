@@ -35,6 +35,12 @@ export const EmailDetail: React.FC<{
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{ verified: boolean; error?: string } | null>(null);
   const [downloadingAttId, setDownloadingAttId] = useState<string | null>(null);
+  const safeBody = typeof email.body === 'string' ? email.body : '';
+  const safeSubject = typeof email.subject === 'string' && email.subject.trim() ? email.subject.trim() : '(No Subject)';
+  const safeSenderEmail = typeof email.from?.email === 'string' ? email.from.email.trim() : '';
+  const safeSenderName = typeof email.from?.name === 'string' && email.from.name.trim()
+    ? email.from.name.trim()
+    : (safeSenderEmail || '(Unknown)');
 
   // Keyboard shortcuts for next/prev
   useEffect(() => {
@@ -62,9 +68,9 @@ export const EmailDetail: React.FC<{
         const { callEmailAI } = await import('@/lib/ai');
         const result = await callEmailAI({
           action: 'quick_replies',
-          emailBody: email.body,
-          emailSubject: email.subject,
-          emailFrom: email.from.name,
+          emailBody: safeBody,
+          emailSubject: safeSubject,
+          emailFrom: safeSenderName,
         });
         if (!cancelled) {
           try {
@@ -95,12 +101,12 @@ export const EmailDetail: React.FC<{
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
-        <html><head><title>${email.subject}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
-        <h1>${email.subject}</h1>
-        <p class="meta">From: ${email.from.name} &lt;${email.from.email}&gt;</p>
+        <html><head><title>${safeSubject}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
+        <h1>${safeSubject}</h1>
+        <p class="meta">From: ${safeSenderName} &lt;${safeSenderEmail}&gt;</p>
         <p class="meta">To: ${email.to.map(t => `${t.name} &lt;${t.email}&gt;`).join(', ')}</p>
         <p class="meta">Date: ${new Date(email.date).toLocaleString()}</p>
-        <hr/>${email.body}
+        <hr/>${safeBody}
         </body></html>
       `);
       printWindow.document.close();
@@ -119,11 +125,11 @@ export const EmailDetail: React.FC<{
       if (email.headers.returnPath) lines.push(`Return-Path: ${email.headers.returnPath}`);
       if (email.headers.received) email.headers.received.forEach(r => lines.push(`Received: ${r}`));
       lines.push(`Date: ${dateStr}`);
-      lines.push(`From: ${email.from.name} <${email.from.email}>`);
+      lines.push(`From: ${safeSenderName} <${safeSenderEmail}>`);
       lines.push(`To: ${email.to.map(t => `${t.name} <${t.email}>`).join(', ')}`);
       if (email.cc?.length) lines.push(`Cc: ${email.cc.map(c => `${c.name} <${c.email}>`).join(', ')}`);
       if (email.bcc?.length) lines.push(`Bcc: ${email.bcc.map(b => `${b.name} <${b.email}>`).join(', ')}`);
-      lines.push(`Subject: ${email.subject}`);
+      lines.push(`Subject: ${safeSubject}`);
       lines.push(`MIME-Version: 1.0`);
       lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
       if (email.importance === 'high') lines.push(`Importance: high`);
@@ -132,7 +138,7 @@ export const EmailDetail: React.FC<{
       lines.push(`Content-Type: text/html; charset="UTF-8"`);
       lines.push(`Content-Transfer-Encoding: quoted-printable`);
       lines.push('');
-      lines.push(email.body);
+      lines.push(safeBody);
       lines.push('');
       lines.push(`--${boundary}--`);
       return { buildEml: lines.join('\r\n') };
@@ -141,7 +147,7 @@ export const EmailDetail: React.FC<{
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${email.subject || 'email'}.eml`;
+    a.download = `${safeSubject || 'email'}.eml`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -154,7 +160,7 @@ export const EmailDetail: React.FC<{
 
   // Check if email body contains external sender (different domain)
   const userDomain = settings.account.email.split('@')[1];
-  const senderDomain = email.from.email.split('@')[1];
+  const senderDomain = safeSenderEmail.split('@')[1];
   const isExternalSender = userDomain && senderDomain && userDomain !== senderDomain;
 
   return (
@@ -447,7 +453,7 @@ export const EmailDetail: React.FC<{
               </div>
             )}
             <h1 className="text-2xl font-bold text-glow-text-primary tracking-tight flex-1">
-              {email.subject}
+                    {safeSubject}
             </h1>
           </div>
 
@@ -478,7 +484,7 @@ export const EmailDetail: React.FC<{
                   onClick={async () => {
                     setVerifying(true);
                     try {
-                      const body = email.body || '';
+                      const body = safeBody;
                       const isCleartext = body.includes('-----BEGIN PGP SIGNED MESSAGE-----');
                       const result = await pgpVerifySignature({
                         ...(isCleartext ? { cleartext: body } : { armoredMessage: body }),
@@ -513,17 +519,17 @@ export const EmailDetail: React.FC<{
                 color: '#042F27',
                 boxShadow: '0 0 12px rgba(22, 201, 150, 0.3)',
               }}>
-                {email.from.name.charAt(0).toUpperCase()}
+                {safeSenderName.charAt(0).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-glow-text-primary">{email.from.name}</span>
+                  <span className="font-semibold text-glow-text-primary">{safeSenderName}</span>
                   <button
-                    onClick={() => copyToClipboard(email.from.email, 'Email')}
+                    onClick={() => copyToClipboard(safeSenderEmail, 'Email')}
                     className="text-sm text-glow-text-secondary hover:text-glow-accent transition-colors cursor-pointer"
                     title={lang === 'ru' ? 'Копировать адрес' : 'Copy address'}
                   >
-                    &lt;{email.from.email}&gt;
+                    &lt;{safeSenderEmail}&gt;
                   </button>
                   <span className="hidden md:inline text-sm text-glow-text-secondary">
                     {format(new Date(email.date), 'MMM d, yyyy, h:mm a')}
@@ -556,7 +562,7 @@ export const EmailDetail: React.FC<{
                 <div className="p-4 bg-glow-surface/50 border border-glow-border-default rounded-xl text-xs font-mono text-glow-text-muted space-y-2">
                   <div className="grid grid-cols-[100px_1fr] gap-2">
                     <span className="text-glow-text-secondary">From:</span>
-                    <span>{email.from.name} &lt;{email.from.email}&gt;</span>
+                    <span>{safeSenderName} &lt;{safeSenderEmail}&gt;</span>
                   </div>
                   <div className="grid grid-cols-[100px_1fr] gap-2">
                     <span className="text-glow-text-secondary">To:</span>
@@ -633,7 +639,7 @@ export const EmailDetail: React.FC<{
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-glow-text-muted">{lang === 'ru' ? 'Исходный HTML' : 'Raw HTML Source'}</span>
                     <button
-                      onClick={() => copyToClipboard(email.body, 'Source')}
+                      onClick={() => copyToClipboard(safeBody, 'Source')}
                       className="text-xs text-glow-text-secondary hover:text-glow-accent flex items-center gap-1 transition-colors"
                     >
                       <ClipboardCopy className="w-3 h-3" />
@@ -641,7 +647,7 @@ export const EmailDetail: React.FC<{
                     </button>
                   </div>
                   <pre className="text-xs text-glow-text-muted font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-                    {email.body}
+                    {safeBody}
                   </pre>
                 </div>
               </motion.div>
@@ -663,7 +669,7 @@ export const EmailDetail: React.FC<{
           )}
 
           {(() => {
-            const body = email.body || '';
+            const body = safeBody;
             const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(body);
             if (hasHtmlTags) {
               return (

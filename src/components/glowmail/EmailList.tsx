@@ -23,6 +23,29 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
   const prevFolderRef = useRef(currentFolder);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const getSenderLabel = (email: Email) => {
+    if (typeof email.from?.name === 'string' && email.from.name.trim()) return email.from.name.trim();
+    if (typeof email.from?.email === 'string' && email.from.email.trim()) return email.from.email.trim();
+    return lang === 'ru' ? '(Неизвестный)' : '(Unknown)';
+  };
+
+  const getSubjectLabel = (email: Email) => {
+    if (typeof email.subject === 'string' && email.subject.trim()) return email.subject.trim();
+    return lang === 'ru' ? '(Без темы)' : '(No Subject)';
+  };
+
+  const getSnippetLabel = (email: Email) => {
+    if (typeof email.snippet === 'string' && email.snippet.trim()) return email.snippet.trim();
+    if (typeof email.body === 'string' && email.body.trim()) {
+      return email.body.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return '';
+  };
+
+  const getSafeBody = (email: Email) => {
+    return typeof email.body === 'string' ? email.body : '';
+  };
+
   // Reset sort when folder changes, unless keepFiltersAcrossFolders is on
   useEffect(() => {
     if (prevFolderRef.current !== currentFolder) {
@@ -71,11 +94,11 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     if (email.headers.returnPath) lines.push(`Return-Path: ${email.headers.returnPath}`);
     if (email.headers.received) email.headers.received.forEach(r => lines.push(`Received: ${r}`));
     lines.push(`Date: ${dateStr}`);
-    lines.push(`From: ${email.from.name} <${email.from.email}>`);
+    lines.push(`From: ${getSenderLabel(email)} <${email.from.email}>`);
     lines.push(`To: ${email.to.map(t => `${t.name} <${t.email}>`).join(', ')}`);
     if (email.cc?.length) lines.push(`Cc: ${email.cc.map(c => `${c.name} <${c.email}>`).join(', ')}`);
     if (email.bcc?.length) lines.push(`Bcc: ${email.bcc.map(b => `${b.name} <${b.email}>`).join(', ')}`);
-    lines.push(`Subject: ${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}`);
+    lines.push(`Subject: ${getSubjectLabel(email)}`);
     lines.push(`MIME-Version: 1.0`);
     lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
     if (email.importance === 'high') lines.push(`Importance: high`);
@@ -84,7 +107,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     lines.push(`Content-Type: text/html; charset="UTF-8"`);
     lines.push(`Content-Transfer-Encoding: quoted-printable`);
     lines.push('');
-    lines.push(email.body);
+    lines.push(getSafeBody(email));
     lines.push('');
     lines.push(`--${boundary}--`);
     const emlContent = lines.join('\r\n');
@@ -92,7 +115,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${email.subject || 'email'}.eml`;
+    a.download = `${getSubjectLabel(email) || 'email'}.eml`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -103,12 +126,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
-        <html><head><title>${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
-        <h1>${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}</h1>
-        <p class="meta">From: ${email.from.name} &lt;${email.from.email}&gt;</p>
+        <html><head><title>${getSubjectLabel(email)}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
+        <h1>${getSubjectLabel(email)}</h1>
+        <p class="meta">From: ${getSenderLabel(email)} &lt;${email.from.email}&gt;</p>
         <p class="meta">To: ${email.to.map(t => `${t.name} &lt;${t.email}&gt;`).join(', ')}</p>
         <p class="meta">Date: ${new Date(email.date).toLocaleString()}</p>
-        <hr/>${email.body}
+        <hr/>${getSafeBody(email)}
         </body></html>
       `);
       printWindow.document.close();
@@ -137,9 +160,9 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     if (sortBy === 'date') {
       comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
     } else if (sortBy === 'sender') {
-      comparison = a.from.name.localeCompare(b.from.name);
+      comparison = getSenderLabel(a).localeCompare(getSenderLabel(b));
     } else if (sortBy === 'subject') {
-      comparison = a.subject.localeCompare(b.subject);
+      comparison = getSubjectLabel(a).localeCompare(getSubjectLabel(b));
     } else if (sortBy === 'tags') {
       const aTags = a.tags.join(',');
       const bTags = b.tags.join(',');
@@ -163,7 +186,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
         const d = new Date(email.date);
         key = d.toLocaleDateString();
       } else if (groupBy === 'sender') {
-        key = email.from.name || email.from.email;
+        key = getSenderLabel(email);
       } else if (groupBy === 'tag') {
         key = email.tags.length > 0 ? email.tags[0] : (lang === 'ru' ? 'Без тега' : 'No tag');
       }
@@ -410,7 +433,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                     <AlertTriangle className="w-3.5 h-3.5 text-[#D95C5C]" style={{ filter: 'drop-shadow(0 0 5px rgba(217,92,92,0.4))' }} />
                   )}
                   <span className={cn("font-semibold text-sm", !email.read ? "text-[#1E2A29]" : "text-[#455857]")}>
-                    {email.from.name}
+                    {getSenderLabel(email)}
                   </span>
                   {/* Attachment indicator */}
                   {email.attachments.length > 0 && (
@@ -563,12 +586,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   !email.read ? "font-bold text-[#1E2A29]" : "font-medium text-[#455857]",
                   email.starred && "font-bold text-[#0FBF8D]"
                 )}>
-                  {email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}
+                  {getSubjectLabel(email)}
                 </h3>
               </div>
               
               <p className="text-sm text-[#708380] truncate mb-2">
-                {email.snippet}
+                {getSnippetLabel(email)}
               </p>
 
               {(email.tags.length > 0 || email.attachments.length > 0) && (
