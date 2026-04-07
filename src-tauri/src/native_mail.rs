@@ -77,7 +77,7 @@ struct AttachmentPart {
     content: Vec<u8>,
 }
 
-type ImapSession = imap::Session<imap::Connection>;
+type ImapSession = imap::Session<native_tls::TlsStream<std::net::TcpStream>>;
 
 fn err_to_string<E: std::fmt::Display>(err: E) -> String {
     err.to_string()
