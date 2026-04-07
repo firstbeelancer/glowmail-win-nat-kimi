@@ -688,28 +688,46 @@ export function MailProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      // Step 4: Fetch headers one by one — caches each as it arrives
+      // Step 4: Fetch headers in parallel batches for better performance
+      const BATCH_SIZE = 5; // Process 5 emails in parallel
       const BATCH_CACHE_SIZE = 10;
       let batchBuffer: Email[] = [];
 
-      for (let i = 0; i < uidsToFetch.length; i++) {
-        const uid = uidsToFetch[i];
+      // Process UIDs in batches to avoid blocking UI
+      for (let batchStart = 0; batchStart < uidsToFetch.length; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, uidsToFetch.length);
+        const batchUids = uidsToFetch.slice(batchStart, batchEnd);
 
-        try {
-          const headerData = await mailApi.fetchSingleHeader(folder, uid);
-          const mapped = mapMessages([headerData], folder);
+        // Fetch batch in parallel
+        const batchPromises = batchUids.map(async (uid) => {
+          try {
+            const headerData = await mailApi.fetchSingleHeader(folder, uid);
+            const mapped = mapMessages([headerData], folder);
+            if (mapped.length > 0) {
+              return mapped[0];
+            }
+          } catch {
+            // Skip failed headers silently
+          }
+          return null;
+        });
 
-          if (mapped.length > 0) {
-            batchBuffer.push(mapped[0]);
-            collectContacts(mapped);
+        const batchResults = await Promise.all(batchPromises);
+
+        // Process results
+        for (const email of batchResults) {
+          if (email) {
+            batchBuffer.push(email);
             loadedCount++;
           }
-        } catch {
-          // Skip failed headers silently
+        }
+
+        if (batchResults.some(e => e !== null)) {
+          collectContacts(batchResults.filter((e): e is Email => e !== null));
         }
 
         // Cache in small batches to reduce DB roundtrips
-        if (batchBuffer.length >= BATCH_CACHE_SIZE || i === uidsToFetch.length - 1) {
+        if (batchBuffer.length >= BATCH_CACHE_SIZE || batchEnd === uidsToFetch.length) {
           if (batchBuffer.length > 0) {
             try {
               await desktopCache.cacheEmails(accountEmail, folder, batchBuffer);
@@ -718,29 +736,27 @@ export function MailProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Update progress every 10 emails (less frequent to avoid UI hammering)
-        if ((i + 1) % 10 === 0 || i === uidsToFetch.length - 1) {
-          const currentLoaded = cachedUids.size + loadedCount;
-          pushStatusBanner({
-            tone: 'syncing',
-            text: settings.language === 'ru'
-              ? `Индексирую ${folder}: ${currentLoaded} из ${totalFromServer}`
-              : `Indexing ${folder}: ${currentLoaded} of ${totalFromServer}`,
-            detail: settings.language === 'ru'
-              ? `${Math.max(totalFromServer - currentLoaded, 0)} осталось`
-              : `${Math.max(totalFromServer - currentLoaded, 0)} left`,
-            phase: 'sync',
-            startedAt: syncStartedAt,
-            progress: {
-              loaded: currentLoaded,
-              total: totalFromServer,
-              remaining: Math.max(totalFromServer - currentLoaded, 0),
-            },
-          });
-        }
+        // Update progress
+        const currentLoaded = cachedUids.size + loadedCount;
+        pushStatusBanner({
+          tone: 'syncing',
+          text: settings.language === 'ru'
+            ? `Индексирую ${folder}: ${currentLoaded} из ${totalFromServer}`
+            : `Indexing ${folder}: ${currentLoaded} of ${totalFromServer}`,
+          detail: settings.language === 'ru'
+            ? `${Math.max(totalFromServer - currentLoaded, 0)} осталось`
+            : `${Math.max(totalFromServer - currentLoaded, 0)} left`,
+          phase: 'sync',
+          startedAt: syncStartedAt,
+          progress: {
+            loaded: currentLoaded,
+            total: totalFromServer,
+            remaining: Math.max(totalFromServer - currentLoaded, 0),
+          },
+        });
 
-        // Small delay to avoid hammering the server (100ms between each)
-        await new Promise(r => setTimeout(r, 100));
+        // Yield to event loop to prevent UI blocking (shorter delay for parallel batches)
+        await new Promise(r => setTimeout(r, 10));
       }
 
       await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);

@@ -242,7 +242,7 @@ fn connect_with_timeout(host: &str, port: u16) -> Result<native_tls::TlsStream<T
         .ok_or_else(|| "No address resolved".to_string())?;
     let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(10))
         .map_err(err_to_string)?;
-    tcp.set_read_timeout(Some(Duration::from_secs(15)))
+    tcp.set_read_timeout(Some(Duration::from_secs(45)))
         .map_err(err_to_string)?;
     tcp.set_write_timeout(Some(Duration::from_secs(8)))
         .map_err(err_to_string)?;
@@ -897,7 +897,7 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         "to": to,
         "cc": cc,
         "subject": subject,
-        "snippet": subject,
+        "snippet": "",
         "date": date,
         "flags": fetch.flags().iter().map(flag_to_string).collect::<Vec<_>>(),
         "hasAttachments": false,
@@ -922,7 +922,7 @@ impl RawImapClient {
             .ok_or_else(|| "No address resolved".to_string())?;
         let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(10))
             .map_err(err_to_string)?;
-        tcp.set_read_timeout(Some(Duration::from_secs(15)))
+        tcp.set_read_timeout(Some(Duration::from_secs(45)))
             .map_err(err_to_string)?;
         tcp.set_write_timeout(Some(Duration::from_secs(8)))
             .map_err(err_to_string)?;
@@ -1199,7 +1199,7 @@ fn map_raw_header_summary(prefix: &str, header: &[u8]) -> Result<Value, String> 
         "to": to,
         "cc": cc,
         "subject": subject.clone(),
-        "snippet": subject,
+        "snippet": "",
         "date": date,
         "flags": flags,
         "hasAttachments": false,

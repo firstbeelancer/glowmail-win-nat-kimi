@@ -244,6 +244,12 @@ impl AppDatabase {
           new.body_plain
         );
       END;
+
+      -- Performance indexes for faster queries
+      CREATE INDEX IF NOT EXISTS idx_emails_account_folder ON emails(account_email, folder_path);
+      CREATE INDEX IF NOT EXISTS idx_emails_sent_at ON emails(sent_at);
+      CREATE INDEX IF NOT EXISTS idx_emails_uid ON emails(account_email, folder_path, uid);
+      CREATE INDEX IF NOT EXISTS idx_folders_account ON folders(account_email);
       "#,
     )?;
 

@@ -94,6 +94,33 @@ export async function fetchSingleHeader(folder: string, uid: number) {
   return data;
 }
 
+export async function fetchMultipleHeaders(folder: string, uids: number[]) {
+  if (uids.length === 0) return { emails: [] };
+  if (uids.length === 1) {
+    const data = await callImap("fetch-single-header", { folder, uid: uids[0] });
+    return { emails: [data] };
+  }
+  // For multiple UIDs, fetch in parallel with concurrency limit
+  const CONCURRENCY = 5;
+  const results: any[] = [];
+  
+  for (let i = 0; i < uids.length; i += CONCURRENCY) {
+    const batch = uids.slice(i, i + CONCURRENCY);
+    const batchPromises = batch.map(uid => 
+      callImap("fetch-single-header", { folder, uid }).catch(() => null)
+    );
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults.filter(r => r !== null));
+    
+    // Small delay between batches to avoid overwhelming the server
+    if (i + CONCURRENCY < uids.length) {
+      await new Promise(r => setTimeout(r, 10));
+    }
+  }
+  
+  return { emails: results };
+}
+
 export async function fetchEmailBody(folder: string, uid: number) {
   const data = await callImap("fetch", { folder, uid, includeAttachmentContent: false });
   return data;
