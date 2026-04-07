@@ -886,7 +886,6 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         });
     
     log::debug!("IMAP Debug - final from.name: {:?}, from.email: {:?}", from.name, from.email);
-    log::debug!("IMAP Debug - final subject: {:?}", subject);
 
     let to: Vec<Address> = envelope
         .and_then(|env| env.to.as_ref())
@@ -929,6 +928,8 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
     let subject = envelope_subject
         .or(header_subject)
         .unwrap_or_else(|| "(No Subject)".to_string());
+    
+    log::debug!("IMAP Debug - final subject: {:?}", subject);
 
     let date = envelope
         .and_then(|env| env.date.as_ref().map(decode_imap_bytes))
