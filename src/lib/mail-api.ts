@@ -21,8 +21,8 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
-const IMAP_TIMEOUT_MS = 20000; // 20s max per IMAP call
-const IMAP_MAX_RETRIES = 2;
+const IMAP_TIMEOUT_MS = 45000; // 20s max per IMAP call
+const IMAP_MAX_RETRIES = 3;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {

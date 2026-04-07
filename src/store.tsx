@@ -452,7 +452,7 @@ export function MailProvider({ children }: { children: ReactNode }) {
         to: (msg.to || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name), email: a.email })),
         cc: (msg.cc || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name), email: a.email })),
         subject: decodeMime(msg.subject || '(No Subject)'),
-        snippet: decodeMime(msg.subject || ''),
+        snippet: decodeMime(msg.preview || msg.snippet || ''),
         body: '',
         date: msg.date || new Date().toISOString(),
         read: (msg.flags || []).some((f: string) => f === '\\Seen' || f === 'Seen'),

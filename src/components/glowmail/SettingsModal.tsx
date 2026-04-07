@@ -3,7 +3,7 @@ import { useMail } from '../../store';
 import { motion } from 'framer-motion';
 import { X, User, Server, Palette, PenTool, Tags, Plus, Trash2, Image as ImageIcon, Globe, FolderTree, Loader2, Layers, Sparkles, RefreshCw, Plug, Shield, Upload, Check, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import toast from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 import { t } from '@/lib/i18n';
 import { reindexSearchCache } from '@/lib/mail-api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

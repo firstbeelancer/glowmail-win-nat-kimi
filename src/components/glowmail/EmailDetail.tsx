@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { t, translateFolderName } from '@/lib/i18n';
 import { EmailHtmlViewer, EmailTextViewer } from './EmailHtmlViewer';
-import toast from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 import { sendToTigerMediaHub, pgpVerifySignature, fetchAttachmentContent } from '@/lib/mail-api';
 
 export const EmailDetail: React.FC<{

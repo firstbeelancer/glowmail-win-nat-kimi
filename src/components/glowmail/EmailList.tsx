@@ -75,7 +75,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     lines.push(`To: ${email.to.map(t => `${t.name} <${t.email}>`).join(', ')}`);
     if (email.cc?.length) lines.push(`Cc: ${email.cc.map(c => `${c.name} <${c.email}>`).join(', ')}`);
     if (email.bcc?.length) lines.push(`Bcc: ${email.bcc.map(b => `${b.name} <${b.email}>`).join(', ')}`);
-    lines.push(`Subject: ${email.subject}`);
+    lines.push(`Subject: ${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}`);
     lines.push(`MIME-Version: 1.0`);
     lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
     if (email.importance === 'high') lines.push(`Importance: high`);
@@ -103,8 +103,8 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
-        <html><head><title>${email.subject}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
-        <h1>${email.subject}</h1>
+        <html><head><title>${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}</title><style>body{font-family:sans-serif;padding:20px;color:#222;}h1{font-size:18px;}p{margin:4px 0;}.meta{color:#666;font-size:13px;}</style></head><body>
+        <h1>${email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}</h1>
         <p class="meta">From: ${email.from.name} &lt;${email.from.email}&gt;</p>
         <p class="meta">To: ${email.to.map(t => `${t.name} &lt;${t.email}&gt;`).join(', ')}</p>
         <p class="meta">Date: ${new Date(email.date).toLocaleString()}</p>
@@ -563,7 +563,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   !email.read ? "font-bold text-[#1E2A29]" : "font-medium text-[#455857]",
                   email.starred && "font-bold text-[#0FBF8D]"
                 )}>
-                  {email.subject}
+                  {email.subject || (lang === 'ru' ? '(Без темы)' : '(No Subject)')}
                 </h3>
               </div>
               

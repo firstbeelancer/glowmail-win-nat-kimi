@@ -4,7 +4,7 @@ import { Email, Contact, Attachment } from '../../types';
 import { X, Send, Paperclip, Sparkles, Loader2, Bold, Italic, Underline, Link, Image as ImageIcon, List, ListOrdered, AlertTriangle, Trash2, ExternalLink, Tag, ChevronDown, Code, Terminal, Braces, Shield, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 import { t } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { pgpSignMessage, pgpEncryptMessage } from '@/lib/mail-api';
