@@ -641,39 +641,23 @@ export function MailProvider({ children }: { children: ReactNode }) {
       const accountEmail = getCurrentAccountEmail();
       const syncStartedAt = Date.now();
       let loadedCount = 0;
-      let loadedBytes = 0;
-
-      pushStatusBanner({
-        tone: 'syncing',
-        text: settings.language === 'ru'
-          ? `Получаю список писем для ${folder}...`
-          : `Fetching message list for ${folder}...`,
-        phase: 'sync',
-        startedAt: syncStartedAt,
-      });
 
       await desktopCache.markFolderSyncStarted(accountEmail, folder, knownLastUid);
 
       // Step 1: Get all UIDs + total count in one fast call
-      let totalFromServer = totalEmailsHint || 0;
-      let allUids: number[] = [];
+      const uidData = await mailApi.fetchAllUids(folder);
+      const allUids: number[] = (uidData.uids || []).map(Number);
+      const totalFromServer = Number(uidData.total) || allUids.length || totalEmailsHint || 0;
 
-      try {
-        const uidData = await mailApi.fetchAllUids(folder);
-        allUids = (uidData.uids || []).map(Number);
-        totalFromServer = Number(uidData.total) || allUids.length || totalFromServer;
-      } catch {
-        // Fallback: use the hint or initial page total
-        if (!totalFromServer) {
-          const firstPageData = await mailApi.fetchEmailList(folder, 1, PAGE_SIZE);
-          totalFromServer = Number(firstPageData.total) || 0;
-        }
+      if (totalFromServer === 0) {
+        await desktopCache.markFolderSyncFinished(accountEmail, folder, null, null);
+        return;
       }
 
       // Step 2: Get cached UIDs to skip already-indexed emails
       let cachedUids = new Set<number>();
       try {
-        const cached = await desktopCache.getCachedFolderEmails(accountEmail, folder, 10000, 0);
+        const cached = await desktopCache.getCachedFolderEmails(accountEmail, folder, 50000, 0);
         cachedUids = new Set(cached.map(e => Number(e.id)).filter(n => !Number.isNaN(n)));
       } catch { /* ignore */ }
 
@@ -682,15 +666,6 @@ export function MailProvider({ children }: { children: ReactNode }) {
       const totalToSync = uidsToFetch.length;
 
       if (totalToSync === 0) {
-        pushStatusBanner({
-          tone: 'loading',
-          text: settings.language === 'ru'
-            ? `${folder}: все ${totalFromServer} писем уже проиндексированы`
-            : `${folder}: all ${totalFromServer} emails already indexed`,
-          phase: 'sync',
-          startedAt: syncStartedAt,
-          progress: { loaded: totalFromServer, total: totalFromServer, remaining: 0, loadedBytes },
-        });
         await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);
         return;
       }
@@ -698,23 +673,21 @@ export function MailProvider({ children }: { children: ReactNode }) {
       pushStatusBanner({
         tone: 'syncing',
         text: settings.language === 'ru'
-          ? `Индексирую ${folder}: ${cachedUids.size} из ${totalFromServer} писем`
-          : `Indexing ${folder}: ${cachedUids.size} of ${totalFromServer} emails`,
+          ? `Индексирую ${folder}: ${cachedUids.size} из ${totalFromServer}`
+          : `Indexing ${folder}: ${cachedUids.size} of ${totalFromServer}`,
         detail: settings.language === 'ru'
-          ? `${totalToSync} новых писем для индексации • загружаю по одному`
-          : `${totalToSync} new emails to index • loading one by one`,
+          ? `${totalToSync} новых • по одному`
+          : `${totalToSync} new • one by one`,
         phase: 'sync',
         startedAt: syncStartedAt,
         progress: {
           loaded: cachedUids.size,
           total: totalFromServer,
           remaining: totalToSync,
-          loadedBytes,
         },
       });
 
       // Step 4: Fetch headers one by one — caches each as it arrives
-      let successCount = 0;
       const BATCH_CACHE_SIZE = 10;
       let batchBuffer: Email[] = [];
 
@@ -744,16 +717,14 @@ export function MailProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Update progress every 5 emails
-        if ((i + 1) % 5 === 0 || i === uidsToFetch.length - 1) {
+        // Update progress every 10 emails (less frequent to avoid UI hammering)
+        if ((i + 1) % 10 === 0 || i === uidsToFetch.length - 1) {
           const currentLoaded = cachedUids.size + loadedCount;
-          successCount = currentLoaded;
-          loadedBytes = currentLoaded * 2048; // rough estimate
           pushStatusBanner({
             tone: 'syncing',
             text: settings.language === 'ru'
-              ? `Индексирую ${folder}: ${currentLoaded} из ${totalFromServer} писем`
-              : `Indexing ${folder}: ${currentLoaded} of ${totalFromServer} emails`,
+              ? `Индексирую ${folder}: ${currentLoaded} из ${totalFromServer}`
+              : `Indexing ${folder}: ${currentLoaded} of ${totalFromServer}`,
             detail: settings.language === 'ru'
               ? `${Math.max(totalFromServer - currentLoaded, 0)} осталось`
               : `${Math.max(totalFromServer - currentLoaded, 0)} left`,
@@ -763,18 +734,12 @@ export function MailProvider({ children }: { children: ReactNode }) {
               loaded: currentLoaded,
               total: totalFromServer,
               remaining: Math.max(totalFromServer - currentLoaded, 0),
-              loadedBytes,
-            },
-            diagnostics: {
-              step: `sync-email-${i + 1}-of-${uidsToFetch.length}`,
-              folder,
-              source: 'imap-single',
             },
           });
         }
 
         // Small delay to avoid hammering the server
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 30));
       }
 
       await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);
@@ -806,7 +771,7 @@ export function MailProvider({ children }: { children: ReactNode }) {
         scheduleStatusBannerClear();
       }
     }
-  }, [collectContacts, getCurrentAccountEmail, isDesktopCacheReady, isLoading, isSearching, mapMessages, settings.language, estimateEmailPayloadBytes, pushStatusBanner, scheduleStatusBannerClear]);
+  }, [collectContacts, getCurrentAccountEmail, isDesktopCacheReady, isLoading, isSearching, mapMessages, settings.language, pushStatusBanner, scheduleStatusBannerClear]);
 
   const runBackgroundFolderQueue = useCallback(async (folderList: Folder[]) => {
     if (!isDesktopCacheReady || backgroundSyncQueueRunningRef.current || folderList.length === 0) {
@@ -927,108 +892,40 @@ export function MailProvider({ children }: { children: ReactNode }) {
     const requestStartedAt = Date.now();
     setIsLoading(true);
     setConnectionError(null);
-    pushStatusBanner({
-      tone: 'loading',
-      text: settings.language === 'ru'
-        ? `Обновляю ${currentFolder}...`
-        : `Refreshing ${currentFolder}...`,
-      phase: 'refresh',
-      startedAt: requestStartedAt,
-      diagnostics: {
-        step: 'refresh',
-        folder: currentFolder,
-      },
-    });
     try {
       const accountEmail = getCurrentAccountEmail();
       let cachedEmails: Email[] = [];
       let cachedEmailsPromise: Promise<Email[]> | null = null;
 
       if (folders.length === 0) {
-        pushStatusBanner({
-          tone: 'loading',
-          text: settings.language === 'ru'
-            ? 'Загружаю структуру папок...'
-            : 'Loading folder structure...',
-          phase: 'folders',
-          startedAt: requestStartedAt,
-          diagnostics: {
-            step: 'folders',
-            folder: currentFolder,
-          },
-        });
         await loadFolders();
       }
 
       if (isDesktopCacheReady) {
-        pushStatusBanner({
-          tone: 'loading',
-          text: settings.language === 'ru'
-            ? `Открываю локальный кэш ${currentFolder}...`
-            : `Opening local cache for ${currentFolder}...`,
-          phase: 'cache',
-          startedAt: requestStartedAt,
-          diagnostics: {
-            step: 'cache',
-            folder: currentFolder,
-            source: 'sqlite',
-          },
-        });
         cachedEmailsPromise = desktopCache
           .getCachedFolderEmails(accountEmail, currentFolder, PAGE_SIZE, 0)
           .catch(() => []);
         const quickCache = await readCachedFolderEmailsWithTimeout(accountEmail, currentFolder, PAGE_SIZE, 0);
         cachedEmails = quickCache.emails;
         if (quickCache.completed && cachedEmails.length > 0) {
-          const cachedBytes = estimateEmailPayloadBytes(cachedEmails);
           setFolderEmails(cachedEmails);
           setCurrentPage(1);
           setHasMoreEmails(cachedEmails.length >= PAGE_SIZE);
+          // Set total from cache so counter is immediately visible
+          if (totalEmails === 0) {
+            setTotalEmails(cachedEmails.length);
+          }
           collectContacts(cachedEmails);
-          pushStatusBanner({
-            tone: 'loading',
-            text: settings.language === 'ru'
-              ? `Локальный кэш ${currentFolder} открыт`
-              : `Opened local cache for ${currentFolder}`,
-            detail: settings.language === 'ru'
-              ? `${cachedEmails.length} писем уже под рукой`
-              : `${cachedEmails.length} cached emails ready`,
-            phase: 'cache',
-            startedAt: requestStartedAt,
-            progress: {
-              loaded: cachedEmails.length,
-              loadedBytes: cachedBytes,
-            },
-            diagnostics: {
-              step: 'cache-hit',
-              folder: currentFolder,
-              source: 'sqlite',
-            },
-          });
         }
       }
 
       pushStatusBanner({
         tone: 'loading',
         text: settings.language === 'ru'
-          ? `Получаю новые письма для ${currentFolder}...`
-          : `Fetching latest mail for ${currentFolder}...`,
-        detail: settings.language === 'ru'
-          ? 'Тяну первую пачку с сервера и считаю прогресс'
-          : 'Fetching the first server batch and calculating progress',
+          ? `Загружаю ${currentFolder}...`
+          : `Loading ${currentFolder}...`,
         phase: 'network',
         startedAt: requestStartedAt,
-        progress: cachedEmails.length > 0
-          ? {
-              loaded: cachedEmails.length,
-              loadedBytes: estimateEmailPayloadBytes(cachedEmails),
-            }
-          : undefined,
-        diagnostics: {
-          step: 'network',
-          folder: currentFolder,
-          source: 'imap',
-        },
       });
       const data = await mailApi.fetchEmailList(currentFolder, 1, PAGE_SIZE);
       if (cachedEmailsPromise) {
@@ -1062,36 +959,15 @@ export function MailProvider({ children }: { children: ReactNode }) {
       setIsConnected(true);
 
       collectContacts(mapped);
-      pushStatusBanner({
-        tone: total > mapped.length ? 'syncing' : 'loading',
-        text: settings.language === 'ru'
-          ? `Загружено ${mapped.length} из ${total || mapped.length} писем`
-          : `Loaded ${mapped.length} of ${total || mapped.length} emails`,
-        detail: settings.language === 'ru'
-          ? `${Math.max((total || mapped.length) - mapped.length, 0)} осталось • первая пачка уже доступна для чтения`
-          : `${Math.max((total || mapped.length) - mapped.length, 0)} left • the first batch is already readable`,
-        phase: total > mapped.length ? 'sync' : 'network',
-        startedAt: requestStartedAt,
-        progress: {
-          loaded: mapped.length,
-          total: total || mapped.length,
-          remaining: Math.max((total || mapped.length) - mapped.length, 0),
-          loadedBytes,
-        },
-        diagnostics: {
-          step: 'network-complete',
-          folder: currentFolder,
-          source: diagnostics.source || 'imap',
-          durationMs: Number(diagnostics.durationMs) || (Date.now() - requestStartedAt),
-        },
-      });
       if (isDesktopCacheReady) {
         desktopCache.cacheEmails(accountEmail, currentFolder, mapped).catch(console.error);
-        // Only background-sync remaining pages if total > loaded, start from page 2
+        // Background-sync remaining pages if total > loaded
         if (total > PAGE_SIZE) {
           syncFolderPagesToCache(currentFolder, total, 2).catch(console.error);
         }
       }
+      // Clear status banner after successful load
+      scheduleStatusBannerClear(3000);
     } catch (e: any) {
       console.error('fetchEmails error:', e);
       setConnectionError(e.message || 'Connection failed');
@@ -1099,22 +975,18 @@ export function MailProvider({ children }: { children: ReactNode }) {
         tone: 'error',
         text: e.message || 'Connection failed',
         detail: settings.language === 'ru'
-          ? 'Список писем не загрузился, смотри диагностику ниже'
-          : 'Mailbox list did not load, see diagnostics below',
+          ? 'Список писем не загрузился'
+          : 'Mailbox list did not load',
         phase: 'error',
         startedAt: requestStartedAt,
-        diagnostics: {
-          step: 'network-error',
-          folder: currentFolder,
-        },
       });
     } finally {
       setIsLoading(false);
       if (backgroundSyncFoldersRef.current.size === 0) {
-        scheduleStatusBannerClear();
+        scheduleStatusBannerClear(5000);
       }
     }
-  }, [currentFolder, loadFolders, folders.length, mapMessages, mergeFetchedEmails, collectContacts, notifyNewEmails, getCurrentAccountEmail, isDesktopCacheReady, syncFolderPagesToCache, settings.language, readCachedFolderEmailsWithTimeout, estimateEmailPayloadBytes, pushStatusBanner, scheduleStatusBannerClear]);
+  }, [currentFolder, loadFolders, folders.length, mapMessages, mergeFetchedEmails, collectContacts, notifyNewEmails, getCurrentAccountEmail, isDesktopCacheReady, syncFolderPagesToCache, settings.language, readCachedFolderEmailsWithTimeout, pushStatusBanner, scheduleStatusBannerClear]);
 
   useEffect(() => {
     if (!isDesktopCacheReady || folderEmails.length === 0) return;

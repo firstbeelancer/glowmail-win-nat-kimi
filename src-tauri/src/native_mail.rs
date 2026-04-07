@@ -530,7 +530,7 @@ fn fetch_single_header_by_uid(
         )
         .map_err(err_to_string)?;
 
-    for message in &messages {
+    for message in messages.iter() {
         if let Ok(summary) = map_list_message(message) {
             return Ok(summary);
         }
@@ -1173,11 +1173,19 @@ fn parse_fetch_header_summaries(response: &[u8]) -> Result<Vec<Value>, String> {
 fn map_raw_header_summary(prefix: &str, header: &[u8]) -> Result<Value, String> {
     let parsed = mailparse::parse_headers(header).map_err(err_to_string)?.0;
     let uid = extract_numeric_attr(prefix, "UID").unwrap_or_default();
-    let from = parse_single_address(parsed.get_first_value("From").as_deref().unwrap_or(""));
-    let to = parse_address_list(parsed.get_first_value("To").as_deref().unwrap_or(""));
-    let cc = parse_address_list(parsed.get_first_value("Cc").as_deref().unwrap_or(""));
+    let from = parse_single_address(
+        &decode_rfc2047(parsed.get_first_value("From").as_deref().unwrap_or(""))
+    );
+    let to = parse_address_list(
+        &decode_rfc2047(parsed.get_first_value("To").as_deref().unwrap_or(""))
+    );
+    let cc = parse_address_list(
+        &decode_rfc2047(parsed.get_first_value("Cc").as_deref().unwrap_or(""))
+    );
     let subject = parsed
         .get_first_value("Subject")
+        .map(|s| decode_rfc2047(&s))
+        .filter(|s| !s.trim().is_empty())
         .unwrap_or_else(|| "(No Subject)".to_string());
     let date = parsed
         .get_first_value("Date")
@@ -1231,7 +1239,81 @@ fn parse_header_map(header_bytes: &[u8]) -> std::collections::HashMap<String, St
 }
 
 fn decode_imap_bytes(bytes: &std::borrow::Cow<'_, [u8]>) -> String {
-    String::from_utf8_lossy(bytes.as_ref()).trim().to_string()
+    let raw = String::from_utf8_lossy(bytes.as_ref()).trim().to_string();
+    decode_rfc2047(&raw)
+}
+
+/// Decode RFC 2047 encoded-word headers (=?charset?B/Q?data?=)
+fn decode_rfc2047(input: &str) -> String {
+    if !input.contains("=?") {
+        return input.to_string();
+    }
+    let mut result = String::with_capacity(input.len());
+    let mut remaining = input;
+
+    while let Some(start) = remaining.find("=?") {
+        // Push text before the encoded word
+        result.push_str(&remaining[..start]);
+        remaining = &remaining[start + 2..];
+
+        // Charset
+        let q1 = match remaining.find('?') {
+            Some(p) => p,
+            None => { result.push_str("=?"); continue; }
+        };
+        let charset = &remaining[..q1];
+        remaining = &remaining[q1 + 1..];
+
+        // Encoding (B or Q)
+        let q2 = match remaining.find('?') {
+            Some(p) if p == 1 => p,
+            _ => { result.push_str("=?"); continue; }
+        };
+        let encoding = remaining[..q2].to_ascii_uppercase();
+        remaining = &remaining[q2 + 1..];
+
+        // End marker ?=
+        let end = match remaining.find("?=") {
+            Some(p) => p,
+            None => { result.push_str("=?"); continue; }
+        };
+        let data = &remaining[..end];
+        remaining = &remaining[end + 2..];
+
+        let decoded = match encoding.as_str() {
+            "B" => {
+                // Base64
+                match STANDARD.decode(data.as_bytes()) {
+                    Ok(bytes) => String::from_utf8_lossy(&bytes).to_string(),
+                    Err(_) => data.to_string(),
+                }
+            }
+            "Q" => {
+                // Quoted-printable variant
+                let mut buf = Vec::with_capacity(data.len());
+                let mut chars = data.bytes().peekable();
+                while let Some(b) = chars.next() {
+                    match b {
+                        b'_' => buf.push(b' '),
+                        b'=' => {
+                            let h1 = chars.next().and_then(|c| (c as char).to_digit(16));
+                            let h2 = chars.next().and_then(|c| (c as char).to_digit(16));
+                            match (h1, h2) {
+                                (Some(a), Some(b)) => buf.push((a * 16 + b) as u8),
+                                _ => { buf.push(b'='); }
+                            }
+                        }
+                        _ => buf.push(b),
+                    }
+                }
+                String::from_utf8_lossy(&buf).to_string()
+            }
+            _ => data.to_string(),
+        };
+        result.push_str(&decoded);
+    }
+    result.push_str(remaining);
+    result
 }
 
 fn map_imap_address(address: &imap_proto::types::Address<'_>) -> Address {
