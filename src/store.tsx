@@ -642,126 +642,142 @@ export function MailProvider({ children }: { children: ReactNode }) {
       const syncStartedAt = Date.now();
       let loadedCount = 0;
       let loadedBytes = 0;
+
       pushStatusBanner({
         tone: 'syncing',
         text: settings.language === 'ru'
-          ? `Индексирую папку ${folder} и сохраняю письма локально...`
-          : `Indexing ${folder} and saving mail locally...`,
-        detail: settings.language === 'ru'
-          ? 'Фоновая индексация не должна мешать чтению первой пачки'
-          : 'Background indexing should not block reading the first batch',
+          ? `Получаю список писем для ${folder}...`
+          : `Fetching message list for ${folder}...`,
         phase: 'sync',
         startedAt: syncStartedAt,
-        diagnostics: {
-          step: 'background-sync',
-          folder,
-          source: 'sqlite+imap',
-        },
       });
-      await desktopCache.markFolderSyncStarted(accountEmail, folder, knownLastUid);
-      const firstPageData = await mailApi.fetchEmailList(folder, 1, PAGE_SIZE);
-      const firstPageMapped = mapMessages(firstPageData, folder);
-      const firstPageTotal = Number(firstPageData.total) || totalEmailsHint || firstPageMapped.length;
-      loadedCount += firstPageMapped.length;
-      loadedBytes += Number((firstPageData as any)?.diagnostics?.bytesTransferred) || estimateEmailPayloadBytes(firstPageMapped);
 
-      if (firstPageMapped.length > 0) {
-        await desktopCache.cacheEmails(accountEmail, folder, firstPageMapped);
-        collectContacts(firstPageMapped);
-        pushStatusBanner({
-          tone: 'syncing',
-          text: settings.language === 'ru'
-            ? `Индексирую ${folder}: ${loadedCount} из ${firstPageTotal} писем`
-            : `Indexing ${folder}: ${loadedCount} of ${firstPageTotal} emails`,
-          detail: settings.language === 'ru'
-            ? `${Math.max(firstPageTotal - loadedCount, 0)} осталось • первая пачка уже читабельна`
-            : `${Math.max(firstPageTotal - loadedCount, 0)} left • the first batch is already readable`,
-          phase: 'sync',
-          startedAt: syncStartedAt,
-          progress: {
-            loaded: loadedCount,
-            total: firstPageTotal,
-            remaining: Math.max(firstPageTotal - loadedCount, 0),
-            loadedBytes,
-          },
-          diagnostics: {
-            step: 'background-sync-page-1',
-            folder,
-            source: (firstPageData as any)?.diagnostics?.source || 'imap',
-            durationMs: Number((firstPageData as any)?.diagnostics?.durationMs) || undefined,
-          },
-        });
+      await desktopCache.markFolderSyncStarted(accountEmail, folder, knownLastUid);
+
+      // Step 1: Get all UIDs + total count in one fast call
+      let totalFromServer = totalEmailsHint || 0;
+      let allUids: number[] = [];
+
+      try {
+        const uidData = await mailApi.fetchAllUids(folder);
+        allUids = (uidData.uids || []).map(Number);
+        totalFromServer = Number(uidData.total) || allUids.length || totalFromServer;
+      } catch {
+        // Fallback: use the hint or initial page total
+        if (!totalFromServer) {
+          const firstPageData = await mailApi.fetchEmailList(folder, 1, PAGE_SIZE);
+          totalFromServer = Number(firstPageData.total) || 0;
+        }
       }
 
-      const latestUid = firstPageMapped.reduce<number | null>((maxUid, email) => {
-        const uid = Number(email.id);
-        if (Number.isNaN(uid)) return maxUid;
-        if (maxUid === null) return uid;
-        return Math.max(maxUid, uid);
-      }, null);
+      // Step 2: Get cached UIDs to skip already-indexed emails
+      let cachedUids = new Set<number>();
+      try {
+        const cached = await desktopCache.getCachedFolderEmails(accountEmail, folder, 10000, 0);
+        cachedUids = new Set(cached.map(e => Number(e.id)).filter(n => !Number.isNaN(n)));
+      } catch { /* ignore */ }
 
-      if (latestUid !== null && knownLastUid !== null && knownLastUid !== undefined && latestUid <= knownLastUid) {
-        await desktopCache.markFolderSyncFinished(accountEmail, folder, latestUid, null);
+      // Step 3: Determine which UIDs still need fetching
+      const uidsToFetch = allUids.filter(uid => !cachedUids.has(uid));
+      const totalToSync = uidsToFetch.length;
+
+      if (totalToSync === 0) {
+        pushStatusBanner({
+          tone: 'loading',
+          text: settings.language === 'ru'
+            ? `${folder}: все ${totalFromServer} писем уже проиндексированы`
+            : `${folder}: all ${totalFromServer} emails already indexed`,
+          phase: 'sync',
+          startedAt: syncStartedAt,
+          progress: { loaded: totalFromServer, total: totalFromServer, remaining: 0, loadedBytes },
+        });
+        await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);
         return;
       }
 
-      const totalPages = totalEmailsHint && totalEmailsHint > 0
-        ? Math.ceil(totalEmailsHint / PAGE_SIZE)
-        : BACKGROUND_SYNC_PAGE_LIMIT;
-      const finalPage = Math.min(
-        Math.max(startingPage, totalPages),
-        BACKGROUND_SYNC_PAGE_LIMIT,
-      );
-      let lastUid: number | null = latestUid;
+      pushStatusBanner({
+        tone: 'syncing',
+        text: settings.language === 'ru'
+          ? `Индексирую ${folder}: ${cachedUids.size} из ${totalFromServer} писем`
+          : `Indexing ${folder}: ${cachedUids.size} of ${totalFromServer} emails`,
+        detail: settings.language === 'ru'
+          ? `${totalToSync} новых писем для индексации • загружаю по одному`
+          : `${totalToSync} new emails to index • loading one by one`,
+        phase: 'sync',
+        startedAt: syncStartedAt,
+        progress: {
+          loaded: cachedUids.size,
+          total: totalFromServer,
+          remaining: totalToSync,
+          loadedBytes,
+        },
+      });
 
-      for (let page = startingPage; page <= finalPage; page += 1) {
-        const data = await mailApi.fetchEmailList(folder, page, PAGE_SIZE);
-        const mapped = mapMessages(data, folder);
+      // Step 4: Fetch headers one by one — caches each as it arrives
+      let successCount = 0;
+      const BATCH_CACHE_SIZE = 10;
+      let batchBuffer: Email[] = [];
 
-        if (mapped.length === 0) {
-          break;
+      for (let i = 0; i < uidsToFetch.length; i++) {
+        const uid = uidsToFetch[i];
+
+        try {
+          const headerData = await mailApi.fetchSingleHeader(folder, uid);
+          const mapped = mapMessages([headerData], folder);
+
+          if (mapped.length > 0) {
+            batchBuffer.push(mapped[0]);
+            collectContacts(mapped);
+            loadedCount++;
+          }
+        } catch {
+          // Skip failed headers silently
         }
 
-        await desktopCache.cacheEmails(accountEmail, folder, mapped);
-        collectContacts(mapped);
-        loadedCount += mapped.length;
-        loadedBytes += Number((data as any)?.diagnostics?.bytesTransferred) || estimateEmailPayloadBytes(mapped);
-        const totalForProgress = Number(data.total) || firstPageTotal;
-        pushStatusBanner({
-          tone: 'syncing',
-          text: settings.language === 'ru'
-            ? `Индексирую ${folder}: ${loadedCount} из ${totalForProgress} писем`
-            : `Indexing ${folder}: ${loadedCount} of ${totalForProgress} emails`,
-          detail: settings.language === 'ru'
-            ? `${Math.max(totalForProgress - loadedCount, 0)} осталось • ${page} стр.`
-            : `${Math.max(totalForProgress - loadedCount, 0)} left • page ${page}`,
-          phase: 'sync',
-          startedAt: syncStartedAt,
-          progress: {
-            loaded: loadedCount,
-            total: totalForProgress,
-            remaining: Math.max(totalForProgress - loadedCount, 0),
-            loadedBytes,
-          },
-          diagnostics: {
-            step: `background-sync-page-${page}`,
-            folder,
-            source: (data as any)?.diagnostics?.source || 'imap',
-            durationMs: Number((data as any)?.diagnostics?.durationMs) || undefined,
-          },
-        });
-        lastUid = mapped.reduce<number | null>((maxUid, email) => {
-          const uid = Number(email.id);
-          if (Number.isNaN(uid)) return maxUid;
-          if (maxUid === null) return uid;
-          return Math.max(maxUid, uid);
-        }, lastUid);
-
-        if (mapped.length < PAGE_SIZE) {
-          break;
+        // Cache in small batches to reduce DB roundtrips
+        if (batchBuffer.length >= BATCH_CACHE_SIZE || i === uidsToFetch.length - 1) {
+          if (batchBuffer.length > 0) {
+            try {
+              await desktopCache.cacheEmails(accountEmail, folder, batchBuffer);
+            } catch { /* ignore cache errors */ }
+            batchBuffer = [];
+          }
         }
+
+        // Update progress every 5 emails
+        if ((i + 1) % 5 === 0 || i === uidsToFetch.length - 1) {
+          const currentLoaded = cachedUids.size + loadedCount;
+          successCount = currentLoaded;
+          loadedBytes = currentLoaded * 2048; // rough estimate
+          pushStatusBanner({
+            tone: 'syncing',
+            text: settings.language === 'ru'
+              ? `Индексирую ${folder}: ${currentLoaded} из ${totalFromServer} писем`
+              : `Indexing ${folder}: ${currentLoaded} of ${totalFromServer} emails`,
+            detail: settings.language === 'ru'
+              ? `${Math.max(totalFromServer - currentLoaded, 0)} осталось`
+              : `${Math.max(totalFromServer - currentLoaded, 0)} left`,
+            phase: 'sync',
+            startedAt: syncStartedAt,
+            progress: {
+              loaded: currentLoaded,
+              total: totalFromServer,
+              remaining: Math.max(totalFromServer - currentLoaded, 0),
+              loadedBytes,
+            },
+            diagnostics: {
+              step: `sync-email-${i + 1}-of-${uidsToFetch.length}`,
+              folder,
+              source: 'imap-single',
+            },
+          });
+        }
+
+        // Small delay to avoid hammering the server
+        await new Promise(r => setTimeout(r, 50));
       }
-      await desktopCache.markFolderSyncFinished(accountEmail, folder, lastUid, null);
+
+      await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);
     } catch (error) {
       console.warn(`Background cache sync failed for folder ${folder}:`, error);
       pushStatusBanner({

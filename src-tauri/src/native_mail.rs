@@ -143,6 +143,35 @@ fn handle_imap(payload: Value) -> Result<Value, String> {
         }));
     }
 
+    // UID listing — fast, just UIDs + total count
+    if request.action == "uid-list" {
+        let mut session = connect_session(
+            &request.host,
+            request.port,
+            &request.username,
+            &request.password,
+        )?;
+        let folder = request.folder.clone().unwrap_or_else(|| "INBOX".to_string());
+        let result = uid_list(&mut session, &folder);
+        let _ = session.logout();
+        return result;
+    }
+
+    // Single header fetch — one email at a time
+    if request.action == "fetch-single-header" {
+        let mut session = connect_session(
+            &request.host,
+            request.port,
+            &request.username,
+            &request.password,
+        )?;
+        let folder = request.folder.clone().unwrap_or_else(|| "INBOX".to_string());
+        let uid = request.uid.unwrap_or(0);
+        let result = fetch_single_header_by_uid(&mut session, &folder, uid);
+        let _ = session.logout();
+        return result;
+    }
+
     let mut session = connect_session(
         &request.host,
         request.port,
@@ -455,6 +484,59 @@ fn list_emails(session: &mut ImapSession, request: &ImapRequest) -> Result<Value
             "durationMs": started_at.elapsed().as_millis(),
         }
     }))
+}
+
+fn uid_list(session: &mut ImapSession, folder: &str) -> Result<Value, String> {
+    let started_at = std::time::Instant::now();
+    let mailbox = session.select(folder).map_err(err_to_string)?;
+    let total = mailbox.exists;
+
+    if total == 0 {
+        return Ok(json!({
+            "uids": [],
+            "total": 0,
+            "diagnostics": {
+                "source": "imap-session",
+                "durationMs": started_at.elapsed().as_millis(),
+            }
+        }));
+    }
+
+    let uids = session.uid_search("1:*").map_err(err_to_string)?;
+    let mut uid_vec: Vec<u32> = uids.into_iter().collect();
+    uid_vec.sort_unstable_by(|a, b| b.cmp(a)); // newest first
+
+    Ok(json!({
+        "uids": uid_vec,
+        "total": total,
+        "diagnostics": {
+            "source": "imap-session",
+            "durationMs": started_at.elapsed().as_millis(),
+        }
+    }))
+}
+
+fn fetch_single_header_by_uid(
+    session: &mut ImapSession,
+    folder: &str,
+    uid: u32,
+) -> Result<Value, String> {
+    session.select(folder).map_err(err_to_string)?;
+
+    let messages = session
+        .uid_fetch(
+            uid.to_string(),
+            "UID FLAGS ENVELOPE INTERNALDATE RFC822.HEADER",
+        )
+        .map_err(err_to_string)?;
+
+    for message in &messages {
+        if let Ok(summary) = map_list_message(message) {
+            return Ok(summary);
+        }
+    }
+
+    Err(format!("Message with UID {} not found", uid))
 }
 
 fn raw_list_emails(client: &mut RawImapClient, request: &ImapRequest) -> Result<Value, String> {

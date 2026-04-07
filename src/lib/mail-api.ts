@@ -47,6 +47,16 @@ export async function fetchEmailList(folder = "INBOX", page = 1, pageSize = 20) 
   return data;
 }
 
+export async function fetchAllUids(folder = "INBOX") {
+  const data = await callImap("uid-list", { folder });
+  return data;
+}
+
+export async function fetchSingleHeader(folder: string, uid: number) {
+  const data = await callImap("fetch-single-header", { folder, uid });
+  return data;
+}
+
 export async function fetchEmailBody(folder: string, uid: number) {
   const data = await callImap("fetch", { folder, uid, includeAttachmentContent: false });
   return data;
