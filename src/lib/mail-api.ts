@@ -21,7 +21,8 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
-const IMAP_TIMEOUT_MS = 45000; // 20s max per IMAP call
+const IMAP_TIMEOUT_MS = 20000; // 20s max per IMAP call (was 45s - too long for UI)
+const IMAP_BODY_TIMEOUT_MS = 30000; // 30s for fetching email body (can be slower)
 const IMAP_MAX_RETRIES = 3;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -122,7 +123,24 @@ export async function fetchMultipleHeaders(folder: string, uids: number[]) {
 }
 
 export async function fetchEmailBody(folder: string, uid: number) {
-  const data = await callImap("fetch", { folder, uid, includeAttachmentContent: false });
+  // Use longer timeout for body fetch as it can include large content
+  const creds = await getCredentials();
+  if (!creds) throw new Error("Not logged in");
+
+  const data = await withTimeout(
+    invokeBackendFunction("imap-proxy", {
+      action: "fetch",
+      host: creds.imapHost,
+      port: creds.imapPort,
+      username: creds.email,
+      password: creds.password,
+      folder,
+      uid,
+      includeAttachmentContent: false,
+    }),
+    IMAP_BODY_TIMEOUT_MS,
+    `imap:fetch-body`
+  );
   return data;
 }
 

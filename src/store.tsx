@@ -443,32 +443,61 @@ export function MailProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const mapMessages = useCallback((data: any, folder: string): Email[] => {
-    return (data.emails || [])
+    const emails = (data.emails || [])
       .filter((msg: any) => msg.uid)
-      .map((msg: any) => ({
-        id: String(msg.uid),
-        folderId: folder,
-        from: { id: msg.from?.email || '', name: decodeMime(msg.from?.name || ''), email: msg.from?.email || '' },
-        to: (msg.to || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name), email: a.email })),
-        cc: (msg.cc || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name), email: a.email })),
-        subject: decodeMime(msg.subject || '(No Subject)'),
-        snippet: decodeMime(msg.preview || msg.snippet || ''),
-        body: '',
-        date: msg.date || new Date().toISOString(),
-        read: (msg.flags || []).some((f: string) => f === '\\Seen' || f === 'Seen'),
-        starred: (msg.flags || []).some((f: string) => f === '\\Flagged' || f === 'Flagged'),
-        tags: [],
-        attachments: msg.hasAttachments
-          ? [{ id: `att-${msg.uid}-0`, name: 'attachment', size: 0, type: 'application/octet-stream', url: '' }]
-          : (msg.attachments || []).map((att: any, i: number) => ({
-              id: `att-${msg.uid}-${i}`,
-              name: decodeMime(att.name || 'unnamed'),
-              size: att.size || 0,
-              type: att.type || 'application/octet-stream',
-              url: '',
-            })),
-        headers: { messageId: msg.messageId || '', inReplyTo: msg.inReplyTo || '' },
-      }));
+      .map((msg: any) => {
+        // Debug: log problematic messages
+        if (!msg.subject || !msg.from?.name) {
+          console.log('[mapMessages Debug] Message with missing data:', {
+            uid: msg.uid,
+            subject: msg.subject,
+            from: msg.from,
+            hasFrom: !!msg.from,
+            hasFromName: !!msg.from?.name,
+            hasFromEmail: !!msg.from?.email,
+          });
+        }
+        
+        return {
+          id: String(msg.uid),
+          folderId: folder,
+          from: { 
+            id: msg.from?.email || '', 
+            name: decodeMime(msg.from?.name || msg.from?.email || '(Unknown)'), 
+            email: msg.from?.email || '' 
+          },
+          to: (msg.to || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name || ''), email: a.email })),
+          cc: (msg.cc || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name || ''), email: a.email })),
+          subject: decodeMime(msg.subject || '(No Subject)'),
+          snippet: decodeMime(msg.preview || msg.snippet || ''),
+          body: '',
+          date: msg.date || new Date().toISOString(),
+          read: (msg.flags || []).some((f: string) => f === '\\Seen' || f === 'Seen'),
+          starred: (msg.flags || []).some((f: string) => f === '\\Flagged' || f === 'Flagged'),
+          tags: [],
+          attachments: msg.hasAttachments
+            ? [{ id: `att-${msg.uid}-0`, name: 'attachment', size: 0, type: 'application/octet-stream', url: '' }]
+            : (msg.attachments || []).map((att: any, i: number) => ({
+                id: `att-${msg.uid}-${i}`,
+                name: decodeMime(att.name || 'unnamed'),
+                size: att.size || 0,
+                type: att.type || 'application/octet-stream',
+                url: '',
+              })),
+          headers: { messageId: msg.messageId || '', inReplyTo: msg.inReplyTo || '' },
+        };
+      });
+    
+    // Debug: log summary
+    if (emails.length > 0) {
+      const emptySubjects = emails.filter(e => !e.subject || e.subject === '(No Subject)').length;
+      const emptyFrom = emails.filter(e => !e.from.name || e.from.name === '(Unknown)').length;
+      if (emptySubjects > 0 || emptyFrom > 0) {
+        console.log(`[mapMessages Debug] Mapped ${emails.length} emails, ${emptySubjects} empty subjects, ${emptyFrom} empty from names`);
+      }
+    }
+    
+    return emails;
   }, []);
 
   const collectContacts = useCallback((mapped: Email[]) => {
@@ -918,12 +947,35 @@ export function MailProvider({ children }: { children: ReactNode }) {
         await loadFolders();
       }
 
+      // Show loading status immediately
+      pushStatusBanner({
+        tone: 'loading',
+        text: settings.language === 'ru'
+          ? `Загружаю ${currentFolder}...`
+          : `Loading ${currentFolder}...`,
+        phase: 'network',
+        startedAt: requestStartedAt,
+      });
+
       if (isDesktopCacheReady) {
         cachedEmailsPromise = desktopCache
           .getCachedFolderEmails(accountEmail, currentFolder, PAGE_SIZE, 0)
           .catch(() => []);
         const quickCache = await readCachedFolderEmailsWithTimeout(accountEmail, currentFolder, PAGE_SIZE, 0);
         cachedEmails = quickCache.emails;
+        
+        // Debug: log first cached email to diagnose empty subject/sender issues
+        if (cachedEmails.length > 0) {
+          const first = cachedEmails[0];
+          console.log('[Cache Debug] First cached email:', {
+            id: first.id,
+            subject: first.subject,
+            from: first.from,
+            folderId: first.folderId,
+            hasBody: !!first.body,
+          });
+        }
+        
         if (quickCache.completed && cachedEmails.length > 0) {
           setFolderEmails(cachedEmails);
           setCurrentPage(1);
@@ -933,17 +985,27 @@ export function MailProvider({ children }: { children: ReactNode }) {
             setTotalEmails(cachedEmails.length);
           }
           collectContacts(cachedEmails);
+          // Update status to show cache was used
+          pushStatusBanner({
+            tone: 'syncing',
+            text: settings.language === 'ru'
+              ? `Загружено из кэша: ${cachedEmails.length} писем`
+              : `Loaded from cache: ${cachedEmails.length} emails`,
+            phase: 'sync',
+            startedAt: requestStartedAt,
+            progress: {
+              loaded: cachedEmails.length,
+              total: cachedEmails.length,
+              remaining: 0,
+            },
+          });
         }
       }
 
       pushStatusBanner({
         tone: 'loading',
         text: settings.language === 'ru'
-          ? `Загружаю ${currentFolder}...`
-          : `Loading ${currentFolder}...`,
-        phase: 'network',
-        startedAt: requestStartedAt,
-      });
+          ? `Обновляю ${currentFolder}...`
       const data = await mailApi.fetchEmailList(currentFolder, 1, PAGE_SIZE);
       if (cachedEmailsPromise) {
         cachedEmails = await cachedEmailsPromise;
