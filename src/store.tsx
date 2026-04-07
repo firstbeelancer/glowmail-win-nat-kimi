@@ -1006,6 +1006,11 @@ export function MailProvider({ children }: { children: ReactNode }) {
         tone: 'loading',
         text: settings.language === 'ru'
           ? `Обновляю ${currentFolder}...`
+          : `Updating ${currentFolder}...`,
+        phase: 'network',
+        startedAt: requestStartedAt,
+      });
+      
       const data = await mailApi.fetchEmailList(currentFolder, 1, PAGE_SIZE);
       if (cachedEmailsPromise) {
         cachedEmails = await cachedEmailsPromise;
