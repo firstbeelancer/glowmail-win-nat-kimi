@@ -77,7 +77,10 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
         className="absolute inset-0 w-full h-full object-cover"
         draggable={false}
       />
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(135deg, rgba(7,27,26,0.55), rgba(11,35,33,0.50))',
+        backdropFilter: 'blur(2px)',
+      }} />
 
       {/* Login card */}
       <motion.div
@@ -86,33 +89,33 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md mx-4"
       >
-        <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-glow-modal p-8">
+        <div className="rounded-2xl border border-[#E2ECE8] bg-white/95 backdrop-blur-xl p-8" style={{ boxShadow: '0 24px 64px rgba(14, 39, 35, 0.12)' }}>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1.5">Имя</label>
+              <label className="block text-xs font-medium text-[#728785] mb-1.5">Имя</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Как вас зовут?"
-                className="w-full h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition"
+                className="w-full h-11 rounded-xl border border-[#E2ECE8] bg-[#F2F8F6] px-4 text-sm text-[#1E2A29] placeholder:text-[#A1B1AF] focus:outline-none focus:border-[rgba(22,201,150,0.55)] focus:ring-4 focus:ring-[rgba(22,201,150,0.10)] focus:bg-white transition"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1.5">Email</label>
+              <label className="block text-xs font-medium text-[#728785] mb-1.5">Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition"
+                className="w-full h-11 rounded-xl border border-[#E2ECE8] bg-[#F2F8F6] px-4 text-sm text-[#1E2A29] placeholder:text-[#A1B1AF] focus:outline-none focus:border-[rgba(22,201,150,0.55)] focus:ring-4 focus:ring-[rgba(22,201,150,0.10)] focus:bg-white transition"
               />
               {detectedProvider && (
-                <p className="text-xs text-primary/80 mt-1.5 flex items-center gap-1">
+                <p className="text-xs text-[#0FBF8D] mt-1.5 flex items-center gap-1">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   Серверы {detectedProvider} определены автоматически
                 </p>
@@ -121,7 +124,7 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1.5">Пароль приложения</label>
+              <label className="block text-xs font-medium text-[#728785] mb-1.5">Пароль приложения</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -129,17 +132,17 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full h-11 rounded-xl border border-white/10 bg-white/5 px-4 pr-11 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition"
+                  className="w-full h-11 rounded-xl border border-[#E2ECE8] bg-[#F2F8F6] px-4 pr-11 text-sm text-[#1E2A29] placeholder:text-[#A1B1AF] focus:outline-none focus:border-[rgba(22,201,150,0.55)] focus:ring-4 focus:ring-[rgba(22,201,150,0.10)] focus:bg-white transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#728785] hover:text-[#1E2A29] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-[#A3B3B1] mt-1">
                 Используйте пароль приложения, а не основной пароль
               </p>
             </div>
@@ -148,7 +151,7 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-xs text-neutral-400 hover:text-neutral-200 transition flex items-center gap-1"
+              className="text-xs text-[#728785] hover:text-[#1E2A29] transition flex items-center gap-1"
             >
               <svg className={`w-3.5 h-3.5 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -165,43 +168,43 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
               >
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="block text-xs text-neutral-500 mb-1">IMAP сервер</label>
+                    <label className="block text-xs text-[#728785] mb-1">IMAP сервер</label>
                     <input
                       type="text"
                       value={imapHost}
                       onChange={(e) => setImapHost(e.target.value)}
                       placeholder={preset?.imapHost || 'imap.example.com'}
-                      className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-primary/50 transition"
+                      className="w-full h-9 rounded-lg border border-[#E2ECE8] bg-[#F2F8F6] px-3 text-xs text-[#1E2A29] placeholder:text-[#A3B3B1] focus:outline-none focus:border-[rgba(22,201,150,0.55)] transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">Порт</label>
+                    <label className="block text-xs text-[#728785] mb-1">Порт</label>
                     <input
                       type="number"
                       value={imapHost ? imapPort : (preset?.imapPort || 993)}
                       onChange={(e) => setImapPort(Number(e.target.value))}
-                      className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white focus:outline-none focus:border-primary/50 transition"
+                      className="w-full h-9 rounded-lg border border-[#E2ECE8] bg-[#F2F8F6] px-3 text-xs text-[#1E2A29] focus:outline-none focus:border-[rgba(22,201,150,0.55)] transition"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="block text-xs text-glow-text-secondary mb-1">SMTP сервер</label>
+                    <label className="block text-xs text-[#728785] mb-1">SMTP сервер</label>
                     <input
                       type="text"
                       value={smtpHost}
                       onChange={(e) => setSmtpHost(e.target.value)}
                       placeholder={preset?.smtpHost || 'smtp.example.com'}
-                      className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-primary/50 transition"
+                      className="w-full h-9 rounded-lg border border-[#E2ECE8] bg-[#F2F8F6] px-3 text-xs text-[#1E2A29] placeholder:text-[#A3B3B1] focus:outline-none focus:border-[rgba(22,201,150,0.55)] transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">Порт</label>
+                    <label className="block text-xs text-[#728785] mb-1">Порт</label>
                     <input
                       type="number"
                       value={smtpHost ? smtpPort : (preset?.smtpPort || 465)}
                       onChange={(e) => setSmtpPort(Number(e.target.value))}
-                      className="w-full h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white focus:outline-none focus:border-primary/50 transition"
+                      className="w-full h-9 rounded-lg border border-[#E2ECE8] bg-[#F2F8F6] px-3 text-xs text-[#1E2A29] focus:outline-none focus:border-[rgba(22,201,150,0.55)] transition"
                     />
                   </div>
                 </div>
@@ -212,7 +215,12 @@ export default function Login({ onLogin }: { onLogin: (creds: LoginCredentials) 
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full h-11 rounded-xl font-semibold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              style={{
+                background: 'linear-gradient(135deg, #16C996, #35D5D2)',
+                color: '#042F27',
+                boxShadow: '0 10px 24px rgba(21, 201, 150, 0.22)',
+              }}
             >
               {loading ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

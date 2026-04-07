@@ -193,11 +193,11 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     filterMode === 'from_me' ? (lang === 'ru' ? 'От меня' : 'From me') : '';
 
   return (
-    <div className="flex flex-col h-full bg-glow-primary">
+    <div className="flex flex-col h-full" style={{ background: '#F8FCFA' }}>
       {/* Sort & Filter Toolbar */}
-      <div className="px-4 py-2 border-b border-glow-border-default flex items-center justify-between shrink-0 bg-glow-primary">
+      <div className="px-4 py-2 border-b border-[#E3ECE8] flex items-center justify-between shrink-0" style={{ background: '#F8FCFA' }}>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-glow-text-muted">{t('emailList.sortBy', lang)}</span>
+          <span className="text-xs font-medium text-[#728785]">{t('emailList.sortBy', lang)}</span>
           {filterLabel && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-glow-accent/10 text-glow-accent border border-glow-accent/20 font-medium">
               {filterLabel}
@@ -391,34 +391,37 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                 }
               }}
               className={cn(
-                "group flex flex-col p-4 border-b border-glow-border-subtle cursor-grab transition-all hover:bg-glow-surface/50 relative active:cursor-grabbing",
-                !email.read && "bg-glow-surface/20",
-                email.starred && "bg-glow-priority-low/[0.03] shadow-[inset_0_0_25px_rgba(61,217,160,0.06)]",
-                selectedEmailId === email.id && "ring-1 ring-glow-accent/50 bg-glow-accent/[0.06] border-l-2 border-l-glow-accent"
+                "group flex flex-col p-4 border-b border-[#E3ECE8] cursor-grab transition-all hover:bg-[#F2F8F6] relative active:cursor-grabbing",
+                !email.read && "bg-[rgba(233,246,241,0.3)]",
+                email.starred && "bg-[rgba(17,200,154,0.03)]",
+                selectedEmailId === email.id && "bg-[#E7F4EF] border-l-[3px] border-l-[#1ACB98]"
               )}
+              style={selectedEmailId === email.id ? {
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.60), 0 6px 18px rgba(16, 67, 53, 0.06)',
+              } : { borderRadius: 16 }}
             >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  {/* Unread indicator dot */}
+                  {/* Unread indicator dot - emerald green */}
                   {!email.read && (
-                    <span className="w-2 h-2 rounded-full bg-glow-accent shrink-0 shadow-[0_0_6px_rgba(108,138,255,0.6)]" />
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#21D69B', boxShadow: '0 0 6px rgba(33, 214, 155, 0.5)' }} />
                   )}
                   {email.importance === 'high' && (
-                    <AlertTriangle className="w-3.5 h-3.5 text-glow-priority-high drop-shadow-[0_0_5px_rgba(240,122,58,0.5)]" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#D95C5C]" style={{ filter: 'drop-shadow(0 0 5px rgba(217,92,92,0.4))' }} />
                   )}
-                  <span className={cn("font-semibold text-sm", !email.read ? "text-glow-text-primary" : "text-glow-text-secondary")}>
+                  <span className={cn("font-semibold text-sm", !email.read ? "text-[#1E2A29]" : "text-[#455857]")}>
                     {email.from.name}
                   </span>
                   {/* Attachment indicator */}
                   {email.attachments.length > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-glow-text-muted" title={`${email.attachments.length} ${lang === 'ru' ? 'вложени' + (email.attachments.length === 1 ? 'е' : 'я') : 'attachment' + (email.attachments.length > 1 ? 's' : '')}`}>
+                    <span className="inline-flex items-center gap-0.5 text-[#7A8F8B]" title={`${email.attachments.length} ${lang === 'ru' ? 'вложени' + (email.attachments.length === 1 ? 'е' : 'я') : 'attachment' + (email.attachments.length > 1 ? 's' : '')}`}>
                       <Paperclip className="w-3 h-3" />
                       {email.attachments.length > 1 && <span className="text-[10px]">{email.attachments.length}</span>}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-glow-text-muted" title={new Date(email.date).toLocaleString()}>
+                  <span className="text-xs text-[#7F9490]" title={new Date(email.date).toLocaleString()}>
                     {(() => {
                       const d = new Date(email.date);
                       const now = new Date();
@@ -483,8 +486,9 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                     <Star
                       className={cn(
                         "w-4 h-4 transition-all",
-                        email.starred ? "fill-glow-priority-medium text-glow-priority-medium drop-shadow-[0_0_8px_rgba(240,192,64,0.5)]" : "text-glow-text-muted"
+                        email.starred ? "fill-[#F2B94B] text-[#F2B94B]" : "text-[#A3B3B1]"
                       )}
+                      style={email.starred ? { filter: 'drop-shadow(0 0 8px rgba(242,185,75,0.5))' } : {}}
                     />
                   </button>
                   {/* Three-dot menu */}
@@ -556,14 +560,14 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
               <div className="flex items-center gap-2 mb-1">
                 <h3 className={cn(
                   "text-sm flex-1",
-                  !email.read ? "font-bold text-glow-text-primary" : "font-medium text-glow-text-secondary",
-                  email.starred && "font-bold text-glow-priority-low"
+                  !email.read ? "font-bold text-[#1E2A29]" : "font-medium text-[#455857]",
+                  email.starred && "font-bold text-[#0FBF8D]"
                 )}>
                   {email.subject}
                 </h3>
               </div>
               
-              <p className="text-sm text-glow-text-muted truncate mb-2">
+              <p className="text-sm text-[#708380] truncate mb-2">
                 {email.snippet}
               </p>
 
@@ -572,7 +576,8 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   {email.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-glow-surface/80 text-glow-text-secondary border border-glow-border-subtle"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border"
+                      style={{ background: '#EEF5F2', borderColor: '#E2ECE8', color: '#607571' }}
                     >
                       <Tag className="w-2.5 h-2.5" style={{ color: getTagColor(tag) }} />
                       {tag}

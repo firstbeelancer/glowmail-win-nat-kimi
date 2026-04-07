@@ -18,7 +18,7 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
-        /* Premium Glow Color System */
+        /* Emerald UI Color System */
         glow: {
           /* Background scale */
           primary: 'var(--bg-primary)',
@@ -41,11 +41,23 @@ export default {
           'border-subtle': 'var(--border-subtle)',
           'border-focus': 'var(--border-focus)',
           
-          /* Accent - Blue/Purple */
+          /* Accent - Emerald */
           accent: 'var(--accent-primary)',
           'accent-secondary': 'var(--accent-secondary)',
           'accent-muted': 'var(--accent-muted)',
           
+          /* Emerald palette direct */
+          'emerald-50': '#F7FBFA',
+          'emerald-100': '#F2F8F6',
+          'emerald-200': '#E9F6F1',
+          'emerald-300': '#DDF4EB',
+          'emerald-400': '#CDEFE2',
+          'emerald-500': '#11C89A',
+          'emerald-600': '#0FBF8D',
+          'emerald-700': '#103632',
+          'emerald-800': '#0B2321',
+          'emerald-900': '#071B1A',
+
           /* Status colors */
           success: 'var(--success)',
           warning: 'var(--warning)',

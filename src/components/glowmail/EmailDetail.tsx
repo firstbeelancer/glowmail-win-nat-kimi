@@ -430,8 +430,12 @@ export const EmailDetail: React.FC<{
         <div className="max-w-3xl mx-auto">
           {/* External sender warning */}
           {isExternalSender && (
-            <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-glow-warning/5 border border-glow-warning/20 text-xs text-[#d3980d]">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-[14px] text-xs" style={{
+              background: '#FFF8E7',
+              border: '1px solid #F1D17A',
+              color: '#BF8A14',
+            }}>
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: '#D9A11D' }} />
               {lang === 'ru' ? `Внешний отправитель (${senderDomain})` : `External sender (${senderDomain})`}
             </div>
           )}
@@ -504,7 +508,11 @@ export const EmailDetail: React.FC<{
 
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-glow-accent to-cyan-500 flex items-center justify-center text-glow-primary font-bold shadow-glow-accent">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold" style={{
+                background: 'linear-gradient(135deg, #16C996, #36D7C7)',
+                color: '#042F27',
+                boxShadow: '0 0 12px rgba(22, 201, 150, 0.3)',
+              }}>
                 {email.from.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -659,14 +667,14 @@ export const EmailDetail: React.FC<{
             const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(body);
             if (hasHtmlTags) {
               return (
-                <div className="rounded-xl overflow-hidden border border-glow-border-default/50 shadow-sm">
+                <div className="rounded-[22px] overflow-hidden border border-[#E8F0ED]" style={{ boxShadow: '0 8px 26px rgba(14, 39, 35, 0.05)' }}>
                   <EmailHtmlViewer html={body} />
                 </div>
               );
             }
             if (body.trim()) {
               return (
-                <div className="rounded-xl overflow-hidden border border-glow-border-default/50 shadow-sm">
+                <div className="rounded-[22px] overflow-hidden border border-[#E8F0ED]" style={{ boxShadow: '0 8px 26px rgba(14, 39, 35, 0.05)' }}>
                   <EmailTextViewer text={body} />
                 </div>
               );

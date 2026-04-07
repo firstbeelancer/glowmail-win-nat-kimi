@@ -324,8 +324,8 @@ function MailApp() {
           hasPrev={hasPrev}
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-glow-text-muted h-full">
-          <div className="w-16 h-16 bg-glow-surface rounded-full flex items-center justify-center mb-4 shadow-glow">
+        <div className="flex-1 flex flex-col items-center justify-center h-full" style={{ color: '#728785' }}>
+          <div className="w-16 h-16 bg-[#EDF7F3] rounded-full flex items-center justify-center mb-4" style={{ boxShadow: '0 0 0 1px rgba(46, 226, 177, 0.24), 0 0 14px rgba(46, 226, 177, 0.18)' }}>
             <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -354,9 +354,9 @@ function MailApp() {
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
                 <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
               </ResizablePanel>
-              <ResizableHandle withHandle className="bg-glow-border-subtle hover:bg-glow-accent/30 transition-colors data-[resize-handle-active]:bg-glow-accent/50" />
+              <ResizableHandle withHandle className="bg-[#E2ECE8] hover:bg-[rgba(22,201,150,0.3)] transition-colors data-[resize-handle-active]:bg-[rgba(22,201,150,0.5)]" />
               <ResizablePanel defaultSize={65} minSize={40}>
-                <div className="h-full flex flex-col bg-glow-primary relative">
+                <div className="h-full flex flex-col relative" style={{ background: '#F7FBFA' }}>
                   {renderEmailDetail()}
                 </div>
               </ResizablePanel>
@@ -366,9 +366,9 @@ function MailApp() {
               <ResizablePanel defaultSize={40} minSize={20} maxSize={70}>
                 <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
               </ResizablePanel>
-              <ResizableHandle withHandle className="bg-glow-border-subtle hover:bg-glow-accent/30 transition-colors data-[resize-handle-active]:bg-glow-accent/50" />
+              <ResizableHandle withHandle className="bg-[#E2ECE8] hover:bg-[rgba(22,201,150,0.3)] transition-colors data-[resize-handle-active]:bg-[rgba(22,201,150,0.5)]" />
               <ResizablePanel defaultSize={60} minSize={25}>
-                <div className="h-full flex flex-col bg-glow-primary relative">
+                <div className="h-full flex flex-col relative" style={{ background: '#F7FBFA' }}>
                   {renderEmailDetail()}
                 </div>
               </ResizablePanel>
@@ -429,15 +429,15 @@ const Index = () => {
         position="bottom-center"
         toastOptions={{
           style: {
-            background: 'var(--bg-elevated)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-default)',
-            boxShadow: 'var(--glow-modal)',
+            background: '#FFFFFF',
+            color: '#1E2A29',
+            border: '1px solid #E2ECE8',
+            boxShadow: '0 24px 64px rgba(14, 39, 35, 0.12)',
           },
           success: {
             iconTheme: {
-              primary: 'var(--accent-primary)',
-              secondary: 'var(--bg-elevated)',
+              primary: '#11C89A',
+              secondary: '#FFFFFF',
             },
           },
         }}
