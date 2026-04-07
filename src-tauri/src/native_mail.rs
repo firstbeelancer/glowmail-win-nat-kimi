@@ -823,6 +823,16 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
     let headers = parse_header_map(fetch.header().unwrap_or(&[]));
     let envelope = fetch.envelope();
     let (has_attachments, attachments) = infer_attachment_summary_from_headers(&headers);
+    
+    // Debug logging for troubleshooting encoding issues
+    let raw_subject = headers.get("subject").cloned().unwrap_or_default();
+    let raw_from = headers.get("from").cloned().unwrap_or_default();
+    log::debug!("IMAP Debug - Raw subject: {:?}", raw_subject);
+    log::debug!("IMAP Debug - Raw from: {:?}", raw_from);
+    log::debug!("IMAP Debug - Has envelope: {}", envelope.is_some());
+    if let Some(env) = envelope {
+        log::debug!("IMAP Debug - Envelope from: {:?}", env.from.as_ref().map(|f| f.first().map(|a| (a.name.as_ref(), a.mailbox.as_ref(), a.host.as_ref()))));
+    }
 
     let from = envelope
         .and_then(|env| env.from.as_ref().or(env.sender.as_ref()))
@@ -874,6 +884,9 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
                 }
             }
         });
+    
+    log::debug!("IMAP Debug - final from.name: {:?}, from.email: {:?}", from.name, from.email);
+    log::debug!("IMAP Debug - final subject: {:?}", subject);
 
     let to: Vec<Address> = envelope
         .and_then(|env| env.to.as_ref())
@@ -909,6 +922,10 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         .get("subject")
         .map(|s| decode_rfc2047(s))
         .filter(|value| !value.trim().is_empty());
+    
+    log::debug!("IMAP Debug - envelope_subject: {:?}", envelope_subject);
+    log::debug!("IMAP Debug - header_subject: {:?}", header_subject);
+    
     let subject = envelope_subject
         .or(header_subject)
         .unwrap_or_else(|| "(No Subject)".to_string());
