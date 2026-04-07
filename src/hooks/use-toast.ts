@@ -134,7 +134,17 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+type ToastInvoker = ((props: Toast) => {
+  id: string;
+  dismiss: () => void;
+  update: (props: ToasterToast) => void;
+}) & {
+  success: (title: React.ReactNode, description?: React.ReactNode) => void;
+  error: (title: React.ReactNode, description?: React.ReactNode) => void;
+  info: (title: React.ReactNode, description?: React.ReactNode) => void;
+};
+
+const toast = (({ ...props }: Toast) => {
   const id = genId();
 
   const update = (props: ToasterToast) =>
@@ -161,7 +171,29 @@ function toast({ ...props }: Toast) {
     dismiss,
     update,
   };
-}
+}) as ToastInvoker;
+
+toast.success = (title, description) => {
+  toast({
+    title,
+    description,
+  });
+};
+
+toast.error = (title, description) => {
+  toast({
+    title,
+    description,
+    variant: "destructive",
+  });
+};
+
+toast.info = (title, description) => {
+  toast({
+    title,
+    description,
+  });
+};
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);

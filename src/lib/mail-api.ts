@@ -21,9 +21,9 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
-const IMAP_TIMEOUT_MS = 20000; // 20s max per IMAP call (was 45s - too long for UI)
-const IMAP_BODY_TIMEOUT_MS = 30000; // 30s for fetching email body (can be slower)
-const IMAP_MAX_RETRIES = 3;
+const IMAP_TIMEOUT_MS = 10000; // Keep UI responsive on slow or broken IMAP servers
+const IMAP_BODY_TIMEOUT_MS = 12000; // Opening a message should fail fast instead of freezing the UI
+const IMAP_MAX_RETRIES = 1;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -35,11 +35,16 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function callImapWithRetry(action: string, extra: Record<string, unknown> = {}) {
+async function callImapWithRetry(
+  action: string,
+  extra: Record<string, unknown> = {},
+  options: { retries?: number } = {},
+) {
   let lastError: any;
-  for (let attempt = 0; attempt <= IMAP_MAX_RETRIES; attempt++) {
+  const retries = Math.max(0, Math.min(options.retries ?? IMAP_MAX_RETRIES, IMAP_MAX_RETRIES));
+  for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt > 0) {
-      // Wait before retry: 1s, 2s
+      // Short backoff so the UI does not disappear into a minute-long hang.
       await new Promise(r => setTimeout(r, attempt * 1000));
     }
     try {
@@ -76,17 +81,17 @@ async function callImap(action: string, extra: Record<string, unknown> = {}) {
 }
 
 export async function fetchFolders() {
-  const data = await callImapWithRetry("folders");
+  const data = await callImapWithRetry("folders", {}, { retries: 0 });
   return data.folders || [];
 }
 
 export async function fetchEmailList(folder = "INBOX", page = 1, pageSize = 20) {
-  const data = await callImapWithRetry("list", { folder, page, pageSize });
+  const data = await callImapWithRetry("list", { folder, page, pageSize }, { retries: 0 });
   return data;
 }
 
 export async function fetchAllUids(folder = "INBOX") {
-  const data = await callImapWithRetry("uid-list", { folder });
+  const data = await callImapWithRetry("uid-list", { folder }, { retries: 1 });
   return data;
 }
 

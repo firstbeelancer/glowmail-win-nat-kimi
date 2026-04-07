@@ -7,6 +7,7 @@ import { Star, Paperclip, Tag, Inbox, AlertTriangle, ArrowDownAZ, ArrowUpAZ, Cal
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { t } from '@/lib/i18n';
+import { getEmailIdentityKey } from '@/lib/email-identity';
 
 type FilterMode = 'all' | 'unread' | 'attachments' | 'to_me' | 'from_me';
 
@@ -26,12 +27,12 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
   const getSenderLabel = (email: Email) => {
     if (typeof email.from?.name === 'string' && email.from.name.trim()) return email.from.name.trim();
     if (typeof email.from?.email === 'string' && email.from.email.trim()) return email.from.email.trim();
-    return lang === 'ru' ? '(Неизвестный)' : '(Unknown)';
+    return lang === 'ru' ? '(???????????)' : '(Unknown)';
   };
 
   const getSubjectLabel = (email: Email) => {
     if (typeof email.subject === 'string' && email.subject.trim()) return email.subject.trim();
-    return lang === 'ru' ? '(Без темы)' : '(No Subject)';
+    return lang === 'ru' ? '(??? ????)' : '(No Subject)';
   };
 
   const getSnippetLabel = (email: Email) => {
@@ -73,13 +74,13 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
     return tagDef ? tagDef.color : '#6c8aff';
   };
 
-  const toggleEmailTag = (emailId: string, tagName: string) => {
-    const email = emails.find(e => e.id === emailId);
+  const toggleEmailTag = (emailKey: string, tagName: string) => {
+    const email = emails.find((item) => getEmailIdentityKey(item) === emailKey);
     if (!email) return;
     const newTags = email.tags.includes(tagName)
       ? email.tags.filter(t => t !== tagName)
       : [...email.tags, tagName];
-    updateEmailTags(emailId, newTags);
+    updateEmailTags(email.id, newTags, email.folderId);
   };
 
   const handleSaveEmail = (email: Email, e: React.MouseEvent) => {
@@ -401,10 +402,10 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(index * 0.02, 0.5) }}
-              key={email.id}
+              key={getEmailIdentityKey(email)}
               draggable
               onDragStart={(e: any) => {
-                e.dataTransfer.setData('text/email-id', email.id);
+                e.dataTransfer.setData('text/email-id', getEmailIdentityKey(email));
                 e.dataTransfer.effectAllowed = 'move';
               }}
               onClick={() => onSelect(email)}
@@ -417,9 +418,9 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                 "group flex flex-col p-4 border-b border-[#E3ECE8] cursor-grab transition-all hover:bg-[#F2F8F6] relative active:cursor-grabbing",
                 !email.read && "bg-[rgba(233,246,241,0.3)]",
                 email.starred && "bg-[rgba(17,200,154,0.03)]",
-                selectedEmailId === email.id && "bg-[#E7F4EF] border-l-[3px] border-l-[#1ACB98]"
+                selectedEmailId === getEmailIdentityKey(email) && "bg-[#E7F4EF] border-l-[3px] border-l-[#1ACB98]"
               )}
-              style={selectedEmailId === email.id ? {
+              style={selectedEmailId === getEmailIdentityKey(email) ? {
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.60), 0 6px 18px rgba(16, 67, 53, 0.06)',
               } : { borderRadius: 16 }}
             >
@@ -463,7 +464,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setTagPickerOpenId(tagPickerOpenId === email.id ? null : email.id);
+                        setTagPickerOpenId(tagPickerOpenId === getEmailIdentityKey(email) ? null : getEmailIdentityKey(email));
                         setMenuOpenId(null);
                       }}
                       className="p-1 -mr-1 rounded-full hover:bg-glow-surface text-glow-text-muted hover:text-glow-accent transition-colors opacity-0 group-hover:opacity-100"
@@ -471,7 +472,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                     >
                       <Tag className="w-3.5 h-3.5" />
                     </button>
-                    {tagPickerOpenId === email.id && (
+                    {tagPickerOpenId === getEmailIdentityKey(email) && (
                       <div
                         className="absolute right-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-lg overflow-hidden z-50"
                         onClick={(e) => e.stopPropagation()}
@@ -483,7 +484,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                             return (
                               <button
                                 key={tag.id}
-                                onClick={() => toggleEmailTag(email.id, tag.name)}
+                                onClick={() => toggleEmailTag(getEmailIdentityKey(email), tag.name)}
                                 className={cn(
                                   "flex items-center gap-2 text-left px-3 py-1.5 text-xs rounded-lg transition-colors",
                                   isActive ? "bg-glow-elevated text-glow-text-primary" : "text-glow-text-secondary hover:bg-glow-elevated hover:text-glow-text-primary"
@@ -502,7 +503,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleStar(email.id);
+                      toggleStar(email.id, email.folderId);
                     }}
                     className="p-1 -mr-1 rounded-full hover:bg-glow-surface transition-colors"
                   >
@@ -519,14 +520,14 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setMenuOpenId(menuOpenId === email.id ? null : email.id);
+                        setMenuOpenId(menuOpenId === getEmailIdentityKey(email) ? null : getEmailIdentityKey(email));
                         setTagPickerOpenId(null);
                       }}
                       className="p-1 -mr-1 rounded-full hover:bg-glow-surface text-glow-text-muted hover:text-glow-text-secondary transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
-                    {menuOpenId === email.id && (
+                    {menuOpenId === getEmailIdentityKey(email) && (
                       <div
                         className="absolute right-0 top-full mt-1 w-44 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-lg overflow-hidden z-50"
                         onClick={(e) => e.stopPropagation()}
@@ -536,9 +537,9 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                             onClick={(e) => {
                               e.stopPropagation();
                               if (email.read) {
-                                markAsUnread(email.id);
+                                markAsUnread(email.id, email.folderId);
                               } else {
-                                markAsRead(email.id);
+                                markAsRead(email.id, email.folderId);
                               }
                               setMenuOpenId(null);
                             }}
@@ -565,7 +566,7 @@ export function EmailList({ onSelect, onEditDraft, selectedEmailId }: { onSelect
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteEmail(email.id);
+                              deleteEmail(email.id, email.folderId);
                               setMenuOpenId(null);
                             }}
                             className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-error hover:bg-glow-error/10 rounded-lg transition-colors"

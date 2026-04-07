@@ -5,6 +5,7 @@ import * as desktopCache from './lib/desktop/cache';
 import { getCredentialProfile } from './lib/credentials';
 import { loadPersistedSettings, loadSecureSettings, persistSettings, persistSecureSettings } from './lib/settings-storage';
 import { toast } from '@/hooks/use-toast';
+import { getEmailIdentityKey, getEmailIdentityKeyFromParts } from './lib/email-identity';
 
 /** Decode RFC 2047 MIME-encoded words (=?charset?encoding?text?=) */
 function decodeMime(str: string): string {
@@ -209,12 +210,12 @@ type MailContextType = {
   setCurrentFolder: (id: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  markAsRead: (id: string) => void;
-  markAsUnread: (id: string) => void;
-  toggleStar: (id: string) => void;
-  deleteEmail: (id: string) => void;
-  moveEmailToFolder: (id: string, targetFolder: string) => void;
-  copyEmailToFolder: (id: string, targetFolder: string) => void;
+  markAsRead: (id: string, folderId?: string) => void;
+  markAsUnread: (id: string, folderId?: string) => void;
+  toggleStar: (id: string, folderId?: string) => void;
+  deleteEmail: (id: string, folderId?: string) => void;
+  moveEmailToFolder: (id: string, targetFolder: string, folderId?: string) => void;
+  copyEmailToFolder: (id: string, targetFolder: string, folderId?: string) => void;
   sendEmail: (email: Partial<Email>) => void;
   saveDraft: (email: Partial<Email>) => void;
   addContact: (contact: Contact) => void;
@@ -222,7 +223,7 @@ type MailContextType = {
   fetchEmails: () => Promise<void>;
   loadMoreEmails: () => Promise<void>;
   addFolder: (name: string) => void;
-  updateEmailTags: (id: string, tags: string[]) => void;
+  updateEmailTags: (id: string, tags: string[], folderId?: string) => void;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMoreEmails: boolean;
@@ -581,7 +582,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
     };
 
     updateBothEmailStates((prev) => {
-      const existingIndex = prev.findIndex((item) => item.id === normalizedEmail.id);
+      const normalizedEmailKey = getEmailIdentityKey(normalizedEmail);
+      const existingIndex = prev.findIndex((item) => getEmailIdentityKey(item) === normalizedEmailKey);
       if (existingIndex === -1) {
         return [normalizedEmail, ...prev];
       }
@@ -596,10 +598,10 @@ export function MailProvider({ children }: { children: ReactNode }) {
   }, [updateBothEmailStates]);
 
   const mergeFetchedEmails = useCallback((incoming: Email[], preserved: Email[]) => {
-    const preservedMap = new Map(preserved.map((email) => [email.id, email]));
+    const preservedMap = new Map(preserved.map((email) => [getEmailIdentityKey(email), email]));
 
     return incoming.map((email) => {
-      const cached = preservedMap.get(email.id);
+      const cached = preservedMap.get(getEmailIdentityKey(email));
       if (!cached) return email;
 
       const incomingFrom = normalizeEmailContact(email.from, '(Unknown)');
@@ -945,8 +947,16 @@ export function MailProvider({ children }: { children: ReactNode }) {
   }, [getCurrentAccountEmail, isDesktopCacheReady, syncFolderPagesToCache]);
 
   const loadFolders = useCallback(async () => {
+    const startedAt = Date.now();
     try {
       const accountEmail = getCurrentAccountEmail();
+
+      pushStatusBanner({
+        tone: 'loading',
+        text: settings.language === 'ru' ? 'Загружаю папки...' : 'Loading folders...',
+        phase: 'folders',
+        startedAt,
+      });
 
       if (isDesktopCacheReady) {
         const cachedFolders = await desktopCache.getCachedFolders(accountEmail);
@@ -1014,8 +1024,15 @@ export function MailProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.error('Failed to load folders:', e);
+      pushStatusBanner({
+        tone: 'error',
+        text: e instanceof Error ? e.message : 'Failed to load folders',
+        detail: settings.language === 'ru' ? 'Список папок не загрузился' : 'Folder list did not load',
+        phase: 'folders',
+        startedAt,
+      });
     }
-  }, [getCurrentAccountEmail, hydrateCachedFolderTree, isDesktopCacheReady, runBackgroundFolderQueue]);
+  }, [getCurrentAccountEmail, hydrateCachedFolderTree, isDesktopCacheReady, runBackgroundFolderQueue, pushStatusBanner, settings.language]);
 
   const fetchEmails = useCallback(async () => {
     const requestStartedAt = Date.now();
@@ -1027,6 +1044,14 @@ export function MailProvider({ children }: { children: ReactNode }) {
       let cachedEmailsPromise: Promise<Email[]> | null = null;
 
       if (folders.length === 0) {
+        pushStatusBanner({
+          tone: 'loading',
+          text: settings.language === 'ru'
+            ? 'Подключаюсь и загружаю папки...'
+            : 'Connecting and loading folders...',
+          phase: 'folders',
+          startedAt: requestStartedAt,
+        });
         await loadFolders();
       }
 
@@ -1380,13 +1405,15 @@ export function MailProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [settings.syncInterval, isSearchActive]);
 
-  const markAsRead = (id: string) => {
+  const markAsRead = (id: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     const uid = Number(id);
     updateBothEmailStates((prev) =>
       prev.map((e) => {
-        if (e.id === id && !e.read) {
+        if (getEmailIdentityKey(e) === targetEmailKey && !e.read) {
           if (!isNaN(uid) && uid > 0) {
-            mailApi.setEmailFlags(currentFolder, uid, ['\\Seen']).catch(console.error);
+            mailApi.setEmailFlags(resolvedFolderId, uid, ['\\Seen']).catch(console.error);
           }
           return { ...e, read: true };
         }
@@ -1395,13 +1422,15 @@ export function MailProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const markAsUnread = (id: string) => {
+  const markAsUnread = (id: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     const uid = Number(id);
     updateBothEmailStates((prev) =>
       prev.map((e) => {
-        if (e.id === id && e.read) {
+        if (getEmailIdentityKey(e) === targetEmailKey && e.read) {
           if (!isNaN(uid) && uid > 0) {
-            mailApi.setEmailFlags(currentFolder, uid, undefined, ['\\Seen']).catch(console.error);
+            mailApi.setEmailFlags(resolvedFolderId, uid, undefined, ['\\Seen']).catch(console.error);
           }
           return { ...e, read: false };
         }
@@ -1410,15 +1439,17 @@ export function MailProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const toggleStar = (id: string) => {
+  const toggleStar = (id: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     updateBothEmailStates((prev) =>
       prev.map((e) => {
-        if (e.id === id) {
+        if (getEmailIdentityKey(e) === targetEmailKey) {
           const newStarred = !e.starred;
           if (newStarred) {
-            mailApi.setEmailFlags(currentFolder, Number(id), ['\\Flagged']).catch(console.error);
+            mailApi.setEmailFlags(resolvedFolderId, Number(id), ['\\Flagged']).catch(console.error);
           } else {
-            mailApi.setEmailFlags(currentFolder, Number(id), undefined, ['\\Flagged']).catch(console.error);
+            mailApi.setEmailFlags(resolvedFolderId, Number(id), undefined, ['\\Flagged']).catch(console.error);
           }
           return { ...e, starred: newStarred };
         }
@@ -1427,35 +1458,40 @@ export function MailProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const handleDeleteEmail = (id: string) => {
+  const handleDeleteEmail = (id: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     // Move to Trash via IMAP
     const trashFolder = folders.find(f => f.icon === 'trash-2')?.id || 'Trash';
-    if (currentFolder === trashFolder) {
-      mailApi.deleteEmail(currentFolder, Number(id)).catch(console.error);
+    if (resolvedFolderId === trashFolder) {
+      mailApi.deleteEmail(resolvedFolderId, Number(id)).catch(console.error);
     } else {
-      mailApi.moveEmail(currentFolder, Number(id), trashFolder).catch(console.error);
+      mailApi.moveEmail(resolvedFolderId, Number(id), trashFolder).catch(console.error);
     }
     if (isDesktopCacheReady) {
-      desktopCache.removeCachedEmail(getCurrentAccountEmail(), currentFolder, id).catch(console.error);
+      desktopCache.removeCachedEmail(getCurrentAccountEmail(), resolvedFolderId, id).catch(console.error);
     }
-    updateBothEmailStates((prev) => prev.filter((e) => e.id !== id));
+    updateBothEmailStates((prev) => prev.filter((e) => getEmailIdentityKey(e) !== targetEmailKey));
   };
 
-  const moveEmailToFolder = (id: string, targetFolder: string) => {
+  const moveEmailToFolder = (id: string, targetFolder: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     const uid = Number(id);
     if (!isNaN(uid) && uid > 0) {
-      mailApi.moveEmail(currentFolder, uid, targetFolder).catch(console.error);
+      mailApi.moveEmail(resolvedFolderId, uid, targetFolder).catch(console.error);
     }
     if (isDesktopCacheReady) {
-      desktopCache.removeCachedEmail(getCurrentAccountEmail(), currentFolder, id).catch(console.error);
+      desktopCache.removeCachedEmail(getCurrentAccountEmail(), resolvedFolderId, id).catch(console.error);
     }
-    updateBothEmailStates((prev) => prev.filter((e) => e.id !== id));
+    updateBothEmailStates((prev) => prev.filter((e) => getEmailIdentityKey(e) !== targetEmailKey));
   };
 
-  const copyEmailToFolder = (id: string, targetFolder: string) => {
+  const copyEmailToFolder = (id: string, targetFolder: string, folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
     const uid = Number(id);
     if (!isNaN(uid) && uid > 0) {
-      mailApi.copyEmail(currentFolder, uid, targetFolder).catch(console.error);
+      mailApi.copyEmail(resolvedFolderId, uid, targetFolder).catch(console.error);
     }
   };
 
@@ -1557,7 +1593,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
         headers: { messageId: `<${Date.now()}@local>` },
       };
       updateBothEmailStates((prev) => {
-        const updated = email.id ? prev.filter(e => e.id !== email.id) : prev;
+        const sentEmailKey = email.id ? getEmailIdentityKeyFromParts('Sent', email.id) : null;
+        const updated = sentEmailKey ? prev.filter((e) => getEmailIdentityKey(e) !== sentEmailKey) : prev;
         return [newEmail, ...updated];
       });
 
@@ -1589,7 +1626,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
       headers: { messageId: `<${Date.now()}@local>` },
     };
     updateBothEmailStates((prev) => {
-      const updated = email.id ? prev.filter(e => e.id !== email.id) : prev;
+      const draftEmailKey = email.id ? getEmailIdentityKeyFromParts('Drafts', email.id) : null;
+      const updated = draftEmailKey ? prev.filter((e) => getEmailIdentityKey(e) !== draftEmailKey) : prev;
       return [newEmail, ...updated];
     });
   };
@@ -1642,9 +1680,11 @@ export function MailProvider({ children }: { children: ReactNode }) {
     setFolders((prev) => [...prev, newFolder]);
   };
 
-  const updateEmailTags = (id: string, tags: string[]) => {
+  const updateEmailTags = (id: string, tags: string[], folderId?: string) => {
+    const resolvedFolderId = folderId || currentFolder;
+    const targetEmailKey = getEmailIdentityKeyFromParts(resolvedFolderId, id);
     updateBothEmailStates((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, tags } : e))
+      prev.map((e) => (getEmailIdentityKey(e) === targetEmailKey ? { ...e, tags } : e))
     );
   };
 

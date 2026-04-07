@@ -41,6 +41,7 @@ export const EmailDetail: React.FC<{
   const safeSenderName = typeof email.from?.name === 'string' && email.from.name.trim()
     ? email.from.name.trim()
     : (safeSenderEmail || '(Unknown)');
+  const safeEmailAddressCopy = safeSenderEmail || safeSenderName;
 
   // Keyboard shortcuts for next/prev
   useEffect(() => {
@@ -154,7 +155,7 @@ export const EmailDetail: React.FC<{
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success(lang === 'ru' ? `${label} скопировано` : `${label} copied`);
+      toast.success(lang === 'ru' ? `${label} ???????????` : `${label} copied`);
     });
   };
 
@@ -185,8 +186,7 @@ export const EmailDetail: React.FC<{
             <button
               onClick={onPrev}
               disabled={!hasPrev}
-              className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title={lang === 'ru' ? 'Предыдущее (k)' : 'Previous (k)'}
+              title={lang === 'ru' ? '?????????? (k)' : 'Previous (k)'}
             >
               <ChevronUp className="w-4 h-4" />
             </button>
@@ -202,7 +202,7 @@ export const EmailDetail: React.FC<{
           <div className="w-px h-5 bg-glow-border-default mx-1 hidden sm:block" />
           <div className="flex items-center gap-0.5">
             <button
-              onClick={() => toggleStar(email.id)}
+              onClick={() => toggleStar(email.id, email.folderId)}
               className="p-1.5 rounded-full hover:bg-glow-elevated transition-colors"
             >
               <Star
@@ -213,9 +213,15 @@ export const EmailDetail: React.FC<{
               />
             </button>
             <button
-              onClick={() => { email.read ? markAsUnread(email.id) : markAsRead(email.id); }}
+              onClick={() => {
+                if (email.read) {
+                  markAsUnread(email.id, email.folderId);
+                } else {
+                  markAsRead(email.id, email.folderId);
+                }
+              }}
               className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-glow-accent transition-colors"
-              title={email.read ? (lang === 'ru' ? 'Отметить непрочитанным (u)' : 'Mark unread (u)') : (lang === 'ru' ? 'Отметить прочитанным' : 'Mark read')}
+              title={email.read ? (lang === 'ru' ? '???????? ????????????? (u)' : 'Mark unread (u)') : (lang === 'ru' ? '???????? ???????????' : 'Mark read')}
             >
               {email.read ? <Mail className="w-4 h-4" /> : <MailOpen className="w-4 h-4" />}
             </button>
@@ -235,7 +241,7 @@ export const EmailDetail: React.FC<{
             </button>
             <button
               onClick={() => {
-                deleteEmail(email.id);
+                deleteEmail(email.id, email.folderId);
                 onBack();
               }}
               className="p-1.5 rounded-full hover:bg-glow-elevated text-glow-text-muted hover:text-red-400 transition-colors"
@@ -309,7 +315,7 @@ export const EmailDetail: React.FC<{
           <button
             onClick={() => onReply('forward', email)}
             className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted transition-colors"
-            title={`${lang === 'ru' ? 'Переслать' : 'Forward'} (f)`}
+            title={`${lang === 'ru' ? '?????????' : 'Forward'} (f)`}
           >
             <Forward className="w-5 h-5" />
           </button>
@@ -342,11 +348,11 @@ export const EmailDetail: React.FC<{
                   <div className="h-px bg-glow-elevated my-1" />
                   {/* Copy email address */}
                   <button
-                    onClick={() => { copyToClipboard(email.from.email, 'Email'); setShowMoreMenu(false); }}
+                    onClick={() => { copyToClipboard(safeEmailAddressCopy, 'Email'); setShowMoreMenu(false); }}
                     className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <ClipboardCopy className="w-4 h-4" />
-                    {lang === 'ru' ? 'Копировать адрес' : 'Copy email address'}
+                    {lang === 'ru' ? '?????????? ?????' : 'Copy email address'}
                   </button>
                   {/* Copy message-id */}
                   {email.headers.messageId && (
@@ -355,7 +361,7 @@ export const EmailDetail: React.FC<{
                       className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                     >
                       <Code className="w-4 h-4" />
-                      {lang === 'ru' ? 'Копировать Message-ID' : 'Copy Message-ID'}
+                      {lang === 'ru' ? '?????????? Message-ID' : 'Copy Message-ID'}
                     </button>
                   )}
                   {/* Show raw source */}
@@ -364,7 +370,7 @@ export const EmailDetail: React.FC<{
                     className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    {lang === 'ru' ? (showRawSource ? 'Скрыть исходник' : 'Показать исходник') : (showRawSource ? 'Hide source' : 'Show source')}
+                    {lang === 'ru' ? (showRawSource ? '?????? ????????' : '???????? ????????') : (showRawSource ? 'Hide source' : 'Show source')}
                   </button>
                   <div className="h-px bg-glow-elevated my-1" />
                   <div className="relative">
@@ -373,7 +379,7 @@ export const EmailDetail: React.FC<{
                       className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors w-full"
                     >
                       <FolderInput className="w-4 h-4" />
-                      {lang === 'ru' ? 'Переместить' : 'Move to'}
+                      {lang === 'ru' ? '???????????' : 'Move to'}
                     </button>
                     {showMovePicker && (
                       <div className="absolute right-full top-0 mr-1 w-48 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50 max-h-60 overflow-y-auto">
@@ -382,7 +388,7 @@ export const EmailDetail: React.FC<{
                             <button
                               key={f.id}
                               onClick={() => {
-                                moveEmailToFolder(email.id, f.id);
+                                moveEmailToFolder(email.id, f.id, email.folderId);
                                 setShowMoreMenu(false);
                                 setShowMovePicker(false);
                                 onBack();
@@ -402,7 +408,7 @@ export const EmailDetail: React.FC<{
                       className="flex items-center gap-2 text-left px-3 py-2 text-sm text-glow-text-primary hover:bg-glow-elevated hover:text-glow-accent rounded-lg transition-colors w-full"
                     >
                       <Copy className="w-4 h-4" />
-                      {lang === 'ru' ? 'Копировать' : 'Copy to'}
+                      {lang === 'ru' ? '??????????' : 'Copy to'}
                     </button>
                     {showCopyPicker && (
                       <div className="absolute right-full top-0 mr-1 w-48 bg-glow-surface border border-glow-border-default rounded-xl shadow-glow-modal overflow-hidden z-50 max-h-60 overflow-y-auto">
@@ -411,7 +417,7 @@ export const EmailDetail: React.FC<{
                             <button
                               key={f.id}
                               onClick={() => {
-                                copyEmailToFolder(email.id, f.id);
+                                copyEmailToFolder(email.id, f.id, email.folderId);
                                 setShowMoreMenu(false);
                                 setShowCopyPicker(false);
                               }}
@@ -442,7 +448,7 @@ export const EmailDetail: React.FC<{
               color: '#BF8A14',
             }}>
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: '#D9A11D' }} />
-              {lang === 'ru' ? `Внешний отправитель (${senderDomain})` : `External sender (${senderDomain})`}
+              {lang === 'ru' ? `??????? ??????????? (${senderDomain})` : `External sender (${senderDomain})`}
             </div>
           )}
 
@@ -491,10 +497,10 @@ export const EmailDetail: React.FC<{
                         publicKeyArmored: settings.cryptoKeys.pgpPublicKey!,
                       });
                       setVerifyResult(result);
-                      toast.success(result.verified ? (lang === 'ru' ? 'Подпись верна' : 'Signature valid') : (lang === 'ru' ? 'Подпись невалидна' : 'Signature invalid'));
+                      toast.success(result.verified ? (lang === 'ru' ? '??????? ?????' : 'Signature valid') : (lang === 'ru' ? '??????? ?????????' : 'Signature invalid'));
                     } catch (e) {
                       setVerifyResult({ verified: false, error: e instanceof Error ? e.message : 'Error' });
-                      toast.error(lang === 'ru' ? 'Ошибка верификации' : 'Verification error');
+                      toast.error(lang === 'ru' ? '?????? ???????????' : 'Verification error');
                     } finally {
                       setVerifying(false);
                     }
@@ -503,7 +509,7 @@ export const EmailDetail: React.FC<{
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-glow-elevated/50 border-glow-border-subtle/50 text-glow-text-primary hover:bg-glow-elevated/50 transition-colors disabled:opacity-50"
                 >
                   {verifying ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
-                  {lang === 'ru' ? 'Проверить подпись' : 'Verify'}
+                  {lang === 'ru' ? '????????? ???????' : 'Verify'}
                 </button>
               )}
               {verifyResult && !verifyResult.verified && verifyResult.error && (
@@ -527,7 +533,7 @@ export const EmailDetail: React.FC<{
                   <button
                     onClick={() => copyToClipboard(safeSenderEmail, 'Email')}
                     className="text-sm text-glow-text-secondary hover:text-glow-accent transition-colors cursor-pointer"
-                    title={lang === 'ru' ? 'Копировать адрес' : 'Copy address'}
+                    title={lang === 'ru' ? '?????????? ?????' : 'Copy address'}
                   >
                     &lt;{safeSenderEmail}&gt;
                   </button>
@@ -643,7 +649,7 @@ export const EmailDetail: React.FC<{
                       className="text-xs text-glow-text-secondary hover:text-glow-accent flex items-center gap-1 transition-colors"
                     >
                       <ClipboardCopy className="w-3 h-3" />
-                      {lang === 'ru' ? 'Копировать' : 'Copy'}
+                      {lang === 'ru' ? '??????????' : 'Copy'}
                     </button>
                   </div>
                   <pre className="text-xs text-glow-text-muted font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
@@ -687,7 +693,7 @@ export const EmailDetail: React.FC<{
             }
             return (
               <p className="text-glow-text-secondary text-sm italic">
-                {settings.language === 'ru' ? 'Письмо загружается....Оставайтесь на связи' : 'Email is loading....Stay tuned'}
+                {settings.language === 'ru' ? '?????? ???????????... ??????????? ?? ?????' : 'Email is loading... Stay tuned'}
               </p>
             );
           })()}
@@ -741,11 +747,11 @@ export const EmailDetail: React.FC<{
                                     a.download = result.name || att.name;
                                     a.click();
                                   } else {
-                                    toast(lang === 'ru' ? 'Не удалось загрузить файл' : 'Failed to download file', { icon: '⚠️' });
+                                    toast(lang === 'ru' ? '?? ??????? ????????? ????' : 'Failed to download file', { icon: '??' });
                                   }
                                 } catch (err) {
                                   console.error('Attachment download failed:', err);
-                                  toast(lang === 'ru' ? 'Ошибка загрузки файла' : 'File download error', { icon: '❌' });
+                                  toast(lang === 'ru' ? '?????? ???????? ?????' : 'File download error', { icon: '?' });
                                 } finally {
                                   setDownloadingAttId(null);
                                 }
@@ -766,7 +772,7 @@ export const EmailDetail: React.FC<{
                                   return;
                                 }
                                 if (!att.url) {
-                                  toast(lang === 'ru' ? 'Файл ещё не загружен' : 'File not loaded yet', { icon: '⚠️' });
+                                  toast(lang === 'ru' ? '???? ??? ?? ????????' : 'File not loaded yet', { icon: '??' });
                                   return;
                                 }
                                 setTmhFolderPrompt({ attId: att.id, folder: tmh.defaultFolder || '' });
@@ -839,7 +845,7 @@ export const EmailDetail: React.FC<{
           className="flex items-center gap-1 text-sm text-glow-text-muted disabled:opacity-30"
         >
           <ChevronUp className="w-4 h-4" />
-          {lang === 'ru' ? 'Пред.' : 'Prev'}
+          {lang === 'ru' ? '????.' : 'Prev'}
         </button>
         <div className="flex items-center gap-2">
           <button onClick={() => onReply('replyAll', email)} className="p-2 rounded-full hover:bg-glow-elevated text-glow-text-muted">
@@ -880,7 +886,7 @@ export const EmailDetail: React.FC<{
                 type="text"
                 value={tmhFolderPrompt.folder}
                 onChange={(e) => setTmhFolderPrompt({ ...tmhFolderPrompt, folder: e.target.value })}
-                placeholder={lang === 'ru' ? 'Папка (пусто = корень)' : 'Folder (empty = root)'}
+                placeholder={lang === 'ru' ? '????? (????? = ??????)' : 'Folder (empty = root)'}
                 className="w-full bg-glow-elevated border border-glow-border-default rounded-lg px-3 py-2 text-sm text-glow-text-primary placeholder:text-glow-text-secondary focus:outline-none focus:ring-1 focus:ring-orange-500 mb-4"
                 autoFocus
               />
@@ -927,7 +933,7 @@ export const EmailDetail: React.FC<{
                   }}
                   className="px-4 py-1.5 text-sm bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors"
                 >
-                  {lang === 'ru' ? 'Отправить' : 'Send'}
+                  {lang === 'ru' ? '?????????' : 'Send'}
                 </button>
               </div>
             </motion.div>

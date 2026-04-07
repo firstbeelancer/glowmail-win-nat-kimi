@@ -12,6 +12,7 @@ import * as mailApi from '../lib/mail-api';
 import * as desktopCache from '../lib/desktop/cache';
 import { saveCredentials, hasCredentials, loadCredentials } from '../lib/credentials';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { getEmailIdentityKey, hasSameEmailIdentity } from '@/lib/email-identity';
 
 const COMPOSE_CHANNEL_NAME = 'glowmail-compose-channel';
 
@@ -31,7 +32,7 @@ function MailApp() {
   // Get sorted email list for next/prev navigation
   const folderEmails = emails.filter(e => e.folderId === currentFolder)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const selectedIdx = selectedEmail ? folderEmails.findIndex(e => e.id === selectedEmail.id) : -1;
+  const selectedIdx = selectedEmail ? folderEmails.findIndex((e) => hasSameEmailIdentity(e, selectedEmail)) : -1;
   const hasPrev = selectedIdx > 0;
   const hasNext = selectedIdx >= 0 && selectedIdx < folderEmails.length - 1;
   const handleNextEmail = () => {
@@ -198,13 +199,13 @@ function MailApp() {
       return resolvedText;
     }
 
-    // Pure plain text — format nicely with links and blockquotes
+    // Pure plain text: format nicely with links and blockquotes.
     if (resolvedText) {
       return formatPlainTextAsHtml(resolvedText);
     }
 
     return settings.language === 'ru'
-      ? '<p style="opacity:0.7">Письмо загружается... Оставайтесь на связи</p>'
+      ? '<p style="opacity:0.7">?????? ???????????... ??????????? ?? ?????</p>'
       : '<p style="opacity:0.7">Email is loading... Stay tuned</p>';
   };
 
@@ -235,9 +236,9 @@ function MailApp() {
     setSelectedEmail(normalizedEmail);
     const delay = settings.markAsReadDelay ?? 0;
     if (delay > 0) {
-      setTimeout(() => markAsRead(email.id), delay * 1000);
+      setTimeout(() => markAsRead(email.id, email.folderId), delay * 1000);
     } else {
-      markAsRead(email.id);
+      markAsRead(email.id, email.folderId);
     }
 
     // Fetch full body from IMAP if not already loaded
@@ -285,11 +286,11 @@ function MailApp() {
         console.error('Failed to fetch email body:', e);
         if (emailLoadRequestIdRef.current === requestId) {
           setSelectedEmail((current) => {
-            if (!current || current.id !== email.id || current.body) return current;
+            if (!current || !hasSameEmailIdentity(current, email) || current.body) return current;
             return {
               ...current,
               body: settings.language === 'ru'
-                ? '<p style="opacity:0.7">Не удалось загрузить письмо. Попробуй открыть его ещё раз.</p>'
+                ? '<p style="opacity:0.7">?? ??????? ????????? ??????. ???????? ??????? ??? ??? ???.</p>'
                 : '<p style="opacity:0.7">Failed to load email. Try opening it again.</p>',
             };
           });
@@ -338,13 +339,14 @@ function MailApp() {
   };
 
   const handleEditDraft = (email: Email) => {
+    const normalizedEmail = normalizeRenderableEmail(email);
     setComposeData({
-      to: email.to,
-      cc: email.cc,
-      bcc: email.bcc,
-      subject: email.subject,
-      body: email.body,
-      id: email.id,
+      to: normalizedEmail.to,
+      cc: normalizedEmail.cc,
+      bcc: normalizedEmail.bcc,
+      subject: normalizedEmail.subject,
+      body: normalizedEmail.body,
+      id: normalizedEmail.id,
     });
   };
 
@@ -369,7 +371,7 @@ function MailApp() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <p>{settings.language === 'ru' ? 'Выберите письмо для чтения' : 'Select an email to read'}</p>
+          <p>{settings.language === 'ru' ? '???????? ?????? ??? ??????' : 'Select an email to read'}</p>
         </div>
       )}
     </AnimatePresence>
@@ -391,7 +393,7 @@ function MailApp() {
           {layoutMode === 'vertical' ? (
             <ResizablePanelGroup direction="horizontal" className="h-full">
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
+                <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail ? getEmailIdentityKey(selectedEmail) : undefined} />
               </ResizablePanel>
               <ResizableHandle withHandle className="bg-[#E2ECE8] hover:bg-[rgba(22,201,150,0.3)] transition-colors data-[resize-handle-active]:bg-[rgba(22,201,150,0.5)]" />
               <ResizablePanel defaultSize={65} minSize={40}>
@@ -403,7 +405,7 @@ function MailApp() {
           ) : (
             <ResizablePanelGroup direction="vertical" className="h-full">
               <ResizablePanel defaultSize={40} minSize={20} maxSize={70}>
-                <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
+                <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail ? getEmailIdentityKey(selectedEmail) : undefined} />
               </ResizablePanel>
               <ResizableHandle withHandle className="bg-[#E2ECE8] hover:bg-[rgba(22,201,150,0.3)] transition-colors data-[resize-handle-active]:bg-[rgba(22,201,150,0.5)]" />
               <ResizablePanel defaultSize={60} minSize={25}>
@@ -417,7 +419,7 @@ function MailApp() {
 
         {/* Mobile: stacked */}
         <div className="lg:hidden flex-1 flex flex-col min-w-0">
-          <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail?.id} />
+          <EmailList onSelect={handleSelectEmail} onEditDraft={handleEditDraft} selectedEmailId={selectedEmail ? getEmailIdentityKey(selectedEmail) : undefined} />
         </div>
 
         <div className="lg:hidden">
