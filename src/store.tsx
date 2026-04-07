@@ -249,6 +249,7 @@ export function MailProvider({ children }: { children: ReactNode }) {
   const backgroundSyncQueueRunningRef = useRef(false);
   const folderEmailsRef = useRef<Email[]>([]);
   const statusClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchEmailsRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   // Request notification permission on mount
   useEffect(() => {
@@ -990,6 +991,11 @@ export function MailProvider({ children }: { children: ReactNode }) {
     }
   }, [currentFolder, loadFolders, folders.length, mapMessages, mergeFetchedEmails, collectContacts, notifyNewEmails, getCurrentAccountEmail, isDesktopCacheReady, syncFolderPagesToCache, settings.language, readCachedFolderEmailsWithTimeout, pushStatusBanner, scheduleStatusBannerClear]);
 
+  // Keep ref in sync to avoid re-render loop in auto-fetch effect
+  useEffect(() => {
+    fetchEmailsRef.current = fetchEmails;
+  }, [fetchEmails]);
+
   useEffect(() => {
     if (!isDesktopCacheReady || folderEmails.length === 0) return;
     if (!folderEmails.every((email) => email.folderId === currentFolder)) return;
@@ -1078,7 +1084,7 @@ export function MailProvider({ children }: { children: ReactNode }) {
     }
   }, [currentFolder, currentPage, isLoadingMore, hasMoreEmails, totalEmails, mapMessages, mergeFetchedEmails, collectContacts, isSearchActive, hasMoreSearchResults, searchQuery, searchPage, isDesktopCacheReady, getCurrentAccountEmail]);
 
-  // Auto-fetch on mount and folder change
+  // Auto-fetch on mount and folder change — use ref to avoid re-render loop
   useEffect(() => {
     const hasCreds = !!getCredentialProfile();
     if (hasCreds) {
@@ -1089,9 +1095,9 @@ export function MailProvider({ children }: { children: ReactNode }) {
       setSearchResultCount(0);
       setSearchPage(1);
       setHasMoreSearchResults(false);
-      fetchEmails();
+      fetchEmailsRef.current();
     }
-  }, [currentFolder, fetchEmails]);
+  }, [currentFolder]);
 
   // Server-side search with debounce (subject/from/to/cc and, when IMAP server supports it, TEXT/BODY)
   // NO dependency on `emails` or `isSearchActive` to prevent loops/overwrites
@@ -1169,16 +1175,16 @@ export function MailProvider({ children }: { children: ReactNode }) {
     };
   }, [searchQuery, currentFolder, mapMessages, getCurrentAccountEmail, isDesktopCacheReady]);
 
-  // Auto-sync interval
+  // Auto-sync interval — use ref to avoid recreating timer on fetchEmails changes
   useEffect(() => {
     const interval = settings.syncInterval;
     if (interval <= 0) return;
     const timer = setInterval(() => {
       const hasCreds = !!getCredentialProfile();
-      if (hasCreds && !isSearchActive) fetchEmails();
+      if (hasCreds && !isSearchActive) fetchEmailsRef.current();
     }, interval * 60 * 1000);
     return () => clearInterval(timer);
-  }, [settings.syncInterval, fetchEmails, isSearchActive]);
+  }, [settings.syncInterval, isSearchActive]);
 
   const markAsRead = (id: string) => {
     const uid = Number(id);
