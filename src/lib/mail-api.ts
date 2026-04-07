@@ -21,9 +21,9 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
-const IMAP_TIMEOUT_MS = 10000; // Keep UI responsive on slow or broken IMAP servers
-const IMAP_BODY_TIMEOUT_MS = 12000; // Opening a message should fail fast instead of freezing the UI
-const IMAP_MAX_RETRIES = 1;
+const IMAP_TIMEOUT_MS = 15000; // 15s for list operations
+const IMAP_BODY_TIMEOUT_MS = 30000; // 30s for body fetch - can be slower due to content size
+const IMAP_MAX_RETRIES = 2;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {

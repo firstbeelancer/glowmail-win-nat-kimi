@@ -832,15 +832,47 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
             if parsed.email.is_empty() && parsed.name.is_empty() {
                 None
             } else {
-                Some(parsed)
+                // Decode RFC 2047 in display name from headers
+                Some(Address {
+                    name: decode_rfc2047(&parsed.name),
+                    email: parsed.email,
+                })
             }
         })
-        .unwrap_or(Address {
-            name: headers
-                .get("from")
-                .cloned()
-                .unwrap_or_else(|| "(Unknown Sender)".to_string()),
-            email: String::new(),
+        .unwrap_or_else(|| {
+            // Try to extract and decode email from raw From header
+            let raw_from = headers.get("from").map(|s| s.as_str()).unwrap_or("");
+            if raw_from.is_empty() {
+                Address {
+                    name: "(Unknown Sender)".to_string(),
+                    email: String::new(),
+                }
+            } else {
+                let decoded = decode_rfc2047(raw_from);
+                // Try to parse as email address
+                if let Some(at_pos) = decoded.find('@') {
+                    if let Some(lt_pos) = decoded.find('<') {
+                        // Format: "Name" <email@domain.com>
+                        let name = decoded[..lt_pos].trim().trim_matches('"').to_string();
+                        let email = decoded[lt_pos + 1..].trim().trim_matches('>').to_string();
+                        Address {
+                            name: decode_rfc2047(&name),
+                            email,
+                        }
+                    } else {
+                        // Just email
+                        Address {
+                            name: String::new(),
+                            email: decoded,
+                        }
+                    }
+                } else {
+                    Address {
+                        name: decoded,
+                        email: String::new(),
+                    }
+                }
+            }
         });
 
     let to: Vec<Address> = envelope
@@ -848,7 +880,10 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         .map(|addresses| map_imap_addresses(addresses))
         .unwrap_or_default();
     let to = if to.is_empty() {
-        parse_address_list(headers.get("to").map(String::as_str).unwrap_or(""))
+        // Decode RFC 2047 in To header before parsing
+        let raw_to = headers.get("to").map(|s| s.as_str()).unwrap_or("");
+        let decoded_to = decode_rfc2047(raw_to);
+        parse_address_list(&decoded_to)
     } else {
         to
     };
@@ -858,7 +893,10 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         .map(|addresses| map_imap_addresses(addresses))
         .unwrap_or_default();
     let cc = if cc.is_empty() {
-        parse_address_list(headers.get("cc").map(String::as_str).unwrap_or(""))
+        // Decode RFC 2047 in Cc header before parsing
+        let raw_cc = headers.get("cc").map(|s| s.as_str()).unwrap_or("");
+        let decoded_cc = decode_rfc2047(raw_cc);
+        parse_address_list(&decoded_cc)
     } else {
         cc
     };
@@ -866,9 +904,10 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
     let envelope_subject = envelope
         .and_then(|env| env.subject.as_ref().map(decode_imap_bytes))
         .filter(|value| !value.trim().is_empty());
+    // Decode RFC 2047 in header subject
     let header_subject = headers
         .get("subject")
-        .cloned()
+        .map(|s| decode_rfc2047(s))
         .filter(|value| !value.trim().is_empty());
     let subject = envelope_subject
         .or(header_subject)
