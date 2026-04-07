@@ -97,36 +97,6 @@ pub fn invoke(function_name: &str, payload: Value) -> Result<Value, String> {
 fn handle_imap(payload: Value) -> Result<Value, String> {
     let request: ImapRequest = serde_json::from_value(payload).map_err(|err| err.to_string())?;
 
-    if matches!(
-        request.action.as_str(),
-        "list" | "fetch" | "fetch-attachment"
-    ) {
-        return handle_imap_raw(&request).or_else(|raw_error| {
-            log::warn!(
-                "Raw IMAP action '{}' failed, falling back to session client: {}",
-                request.action,
-                raw_error
-            );
-
-            let mut session = connect_session(
-                &request.host,
-                request.port,
-                &request.username,
-                &request.password,
-            )?;
-
-            let result = match request.action.as_str() {
-                "list" => list_emails(&mut session, &request),
-                "fetch" => fetch_email(&mut session, &request),
-                "fetch-attachment" => fetch_attachment(&mut session, &request),
-                other => Err(format!("Unsupported native IMAP action '{}'.", other)),
-            };
-
-            let _ = session.logout();
-            result
-        });
-    }
-
     // Non-connecting actions (search returns empty — frontend uses local FTS cache)
     if request.action == "search" {
         return Ok(json!({
@@ -172,6 +142,35 @@ fn handle_imap(payload: Value) -> Result<Value, String> {
         return result;
     }
 
+    // Use raw IMAP ONLY for fetch/fetch-attachment (avoids imap crate parsing issues)
+    // For list, always use session-based to avoid double connections
+    if matches!(request.action.as_str(), "fetch" | "fetch-attachment") {
+        return handle_imap_raw(&request).or_else(|raw_error| {
+            log::warn!(
+                "Raw IMAP action '{}' failed, falling back to session client: {}",
+                request.action,
+                raw_error
+            );
+
+            let mut session = connect_session(
+                &request.host,
+                request.port,
+                &request.username,
+                &request.password,
+            )?;
+
+            let result = match request.action.as_str() {
+                "fetch" => fetch_email(&mut session, &request),
+                "fetch-attachment" => fetch_attachment(&mut session, &request),
+                other => Err(format!("Unsupported native IMAP action '{}'.", other)),
+            };
+
+            let _ = session.logout();
+            result
+        });
+    }
+
+    // All other actions — single session
     let mut session = connect_session(
         &request.host,
         request.port,
@@ -182,8 +181,6 @@ fn handle_imap(payload: Value) -> Result<Value, String> {
     let result = match request.action.as_str() {
         "folders" => list_folders(&mut session),
         "list" => list_emails(&mut session, &request),
-        "fetch" => fetch_email(&mut session, &request),
-        "fetch-attachment" => fetch_attachment(&mut session, &request),
         "flags" => update_flags(&mut session, &request),
         "move" => move_email(&mut session, &request),
         "copy" => copy_email(&mut session, &request),
@@ -243,11 +240,11 @@ fn connect_with_timeout(host: &str, port: u16) -> Result<native_tls::TlsStream<T
         .map_err(err_to_string)?
         .next()
         .ok_or_else(|| "No address resolved".to_string())?;
-    let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(8))
+    let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(10))
         .map_err(err_to_string)?;
-    tcp.set_read_timeout(Some(Duration::from_secs(10)))
+    tcp.set_read_timeout(Some(Duration::from_secs(15)))
         .map_err(err_to_string)?;
-    tcp.set_write_timeout(Some(Duration::from_secs(5)))
+    tcp.set_write_timeout(Some(Duration::from_secs(8)))
         .map_err(err_to_string)?;
 
     let connector = native_tls::TlsConnector::new().map_err(err_to_string)?;
@@ -923,11 +920,11 @@ impl RawImapClient {
             .map_err(err_to_string)?
             .next()
             .ok_or_else(|| "No address resolved".to_string())?;
-        let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(8))
+        let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(10))
             .map_err(err_to_string)?;
-        tcp.set_read_timeout(Some(Duration::from_secs(10)))
+        tcp.set_read_timeout(Some(Duration::from_secs(15)))
             .map_err(err_to_string)?;
-        tcp.set_write_timeout(Some(Duration::from_secs(5)))
+        tcp.set_write_timeout(Some(Duration::from_secs(8)))
             .map_err(err_to_string)?;
 
         let connector = TlsConnector::new().map_err(err_to_string)?;

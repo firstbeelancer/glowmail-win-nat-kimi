@@ -21,7 +21,8 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
-const IMAP_TIMEOUT_MS = 15000; // 15s max per IMAP call
+const IMAP_TIMEOUT_MS = 20000; // 20s max per IMAP call
+const IMAP_MAX_RETRIES = 2;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -31,6 +32,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
       (e) => { clearTimeout(timer); reject(e); }
     );
   });
+}
+
+async function callImapWithRetry(action: string, extra: Record<string, unknown> = {}) {
+  let lastError: any;
+  for (let attempt = 0; attempt <= IMAP_MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      // Wait before retry: 1s, 2s
+      await new Promise(r => setTimeout(r, attempt * 1000));
+    }
+    try {
+      return await callImap(action, extra);
+    } catch (e: any) {
+      lastError = e;
+      // Don't retry on auth errors
+      if (e.message?.includes('LOGIN') || e.message?.includes('AUTH') || e.message?.includes('Not logged in')) {
+        throw e;
+      }
+    }
+  }
+  throw lastError;
 }
 
 async function callImap(action: string, extra: Record<string, unknown> = {}) {
@@ -54,17 +75,17 @@ async function callImap(action: string, extra: Record<string, unknown> = {}) {
 }
 
 export async function fetchFolders() {
-  const data = await callImap("folders");
+  const data = await callImapWithRetry("folders");
   return data.folders || [];
 }
 
 export async function fetchEmailList(folder = "INBOX", page = 1, pageSize = 20) {
-  const data = await callImap("list", { folder, page, pageSize });
+  const data = await callImapWithRetry("list", { folder, page, pageSize });
   return data;
 }
 
 export async function fetchAllUids(folder = "INBOX") {
-  const data = await callImap("uid-list", { folder });
+  const data = await callImapWithRetry("uid-list", { folder });
   return data;
 }
 
