@@ -661,8 +661,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
         cachedUids = new Set(cached.map(e => Number(e.id)).filter(n => !Number.isNaN(n)));
       } catch { /* ignore */ }
 
-      // Step 3: Determine which UIDs still need fetching
-      const uidsToFetch = allUids.filter(uid => !cachedUids.has(uid));
+      // Step 3: Determine which UIDs still need fetching (cap at 200 per session)
+      const uidsToFetch = allUids.filter(uid => !cachedUids.has(uid)).slice(0, 200);
       const totalToSync = uidsToFetch.length;
 
       if (totalToSync === 0) {
@@ -738,8 +738,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Small delay to avoid hammering the server
-        await new Promise(r => setTimeout(r, 30));
+        // Small delay to avoid hammering the server (100ms between each)
+        await new Promise(r => setTimeout(r, 100));
       }
 
       await desktopCache.markFolderSyncFinished(accountEmail, folder, allUids[0] || null, null);
@@ -961,9 +961,11 @@ export function MailProvider({ children }: { children: ReactNode }) {
       collectContacts(mapped);
       if (isDesktopCacheReady) {
         desktopCache.cacheEmails(accountEmail, currentFolder, mapped).catch(console.error);
-        // Background-sync remaining pages if total > loaded
+        // Start background sync after a delay to let UI render first
         if (total > PAGE_SIZE) {
-          syncFolderPagesToCache(currentFolder, total, 2).catch(console.error);
+          setTimeout(() => {
+            syncFolderPagesToCache(currentFolder, total, 2).catch(console.error);
+          }, 3000);
         }
       }
       // Clear status banner after successful load

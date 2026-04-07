@@ -21,18 +21,34 @@ async function getCredentials(): Promise<MailCredentials | null> {
   return loadCredentials();
 }
 
+const IMAP_TIMEOUT_MS = 15000; // 15s max per IMAP call
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timeout: ${label} took longer than ${ms / 1000}s`)), ms);
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); }
+    );
+  });
+}
+
 async function callImap(action: string, extra: Record<string, unknown> = {}) {
   const creds = await getCredentials();
   if (!creds) throw new Error("Not logged in");
 
-  const data = await invokeBackendFunction("imap-proxy", {
-    action,
-    host: creds.imapHost,
-    port: creds.imapPort,
-    username: creds.email,
-    password: creds.password,
-    ...extra,
-  });
+  const data = await withTimeout(
+    invokeBackendFunction("imap-proxy", {
+      action,
+      host: creds.imapHost,
+      port: creds.imapPort,
+      username: creds.email,
+      password: creds.password,
+      ...extra,
+    }),
+    IMAP_TIMEOUT_MS,
+    `imap:${action}`
+  );
 
   return data;
 }

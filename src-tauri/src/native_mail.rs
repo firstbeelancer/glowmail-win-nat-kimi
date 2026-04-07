@@ -243,11 +243,11 @@ fn connect_with_timeout(host: &str, port: u16) -> Result<native_tls::TlsStream<T
         .map_err(err_to_string)?
         .next()
         .ok_or_else(|| "No address resolved".to_string())?;
-    let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(15))
+    let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(8))
         .map_err(err_to_string)?;
-    tcp.set_read_timeout(Some(Duration::from_secs(30)))
+    tcp.set_read_timeout(Some(Duration::from_secs(10)))
         .map_err(err_to_string)?;
-    tcp.set_write_timeout(Some(Duration::from_secs(15)))
+    tcp.set_write_timeout(Some(Duration::from_secs(5)))
         .map_err(err_to_string)?;
 
     let connector = native_tls::TlsConnector::new().map_err(err_to_string)?;
@@ -923,11 +923,11 @@ impl RawImapClient {
             .map_err(err_to_string)?
             .next()
             .ok_or_else(|| "No address resolved".to_string())?;
-        let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(15))
+        let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(8))
             .map_err(err_to_string)?;
-        tcp.set_read_timeout(Some(Duration::from_secs(30)))
+        tcp.set_read_timeout(Some(Duration::from_secs(10)))
             .map_err(err_to_string)?;
-        tcp.set_write_timeout(Some(Duration::from_secs(15)))
+        tcp.set_write_timeout(Some(Duration::from_secs(5)))
             .map_err(err_to_string)?;
 
         let connector = TlsConnector::new().map_err(err_to_string)?;
