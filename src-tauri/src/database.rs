@@ -380,9 +380,18 @@ impl AppDatabase {
                     ON CONFLICT(account_email, folder_path, uid) DO UPDATE SET
                       message_id=excluded.message_id,
                       thread_id=excluded.thread_id,
-                      subject=excluded.subject,
-                      sender_name=excluded.sender_name,
-                      sender_email=excluded.sender_email,
+                      subject=CASE
+                        WHEN excluded.subject <> '' THEN excluded.subject
+                        ELSE emails.subject
+                      END,
+                      sender_name=CASE
+                        WHEN excluded.sender_name <> '' THEN excluded.sender_name
+                        ELSE emails.sender_name
+                      END,
+                      sender_email=CASE
+                        WHEN excluded.sender_email <> '' THEN excluded.sender_email
+                        ELSE emails.sender_email
+                      END,
                       recipients_to=excluded.recipients_to,
                       recipients_cc=excluded.recipients_cc,
                       sent_at=excluded.sent_at,
@@ -412,14 +421,8 @@ impl AppDatabase {
                         WHEN excluded.has_attachments <> 0 THEN excluded.has_attachments
                         ELSE emails.has_attachments
                       END,
-                      is_read=CASE
-                        WHEN excluded.is_read <> 0 THEN excluded.is_read
-                        ELSE emails.is_read
-                      END,
-                      is_starred=CASE
-                        WHEN excluded.is_starred <> 0 THEN excluded.is_starred
-                        ELSE emails.is_starred
-                      END,
+                      is_read=excluded.is_read,
+                      is_starred=excluded.is_starred,
                       updated_at=CURRENT_TIMESTAMP
                     "#,
                     params![
@@ -464,7 +467,7 @@ impl AppDatabase {
             .prepare(
                 r#"
                 SELECT uid, folder_path, subject, sender_name, sender_email, recipients_to, recipients_cc,
-                       sent_at, snippet, '' as body_html, labels_json, attachments_json, headers_json, is_read, is_starred
+                       sent_at, snippet, body_html, labels_json, attachments_json, headers_json, is_read, is_starred
                 FROM emails
                 WHERE account_email = ?1 AND folder_path = ?2
                 ORDER BY datetime(sent_at) DESC
@@ -538,7 +541,7 @@ impl AppDatabase {
             .prepare(
                 r#"
                 SELECT emails.uid, emails.folder_path, emails.subject, emails.sender_name, emails.sender_email,
-                       emails.recipients_to, emails.recipients_cc, emails.sent_at, emails.snippet, '' as body_html,
+                       emails.recipients_to, emails.recipients_cc, emails.sent_at, emails.snippet, emails.body_html,
                        emails.labels_json, emails.attachments_json, emails.headers_json, emails.is_read, emails.is_starred
                 FROM emails_fts
                 JOIN emails ON emails.id = emails_fts.rowid
@@ -715,22 +718,35 @@ fn map_cached_email_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CachedEmail
     let headers_json: String = row.get(12)?;
     let subject: String = row.get(2)?;
     let body_html: String = row.get(9)?;
+    let sender_name: String = row.get(3)?;
+    let sender_email: String = row.get(4)?;
+    let snippet: String = row.get(8)?;
+    let normalized_subject = if subject.trim().is_empty() {
+        "(No Subject)".to_string()
+    } else {
+        subject.clone()
+    };
+    let normalized_sender_name = if sender_name.trim().is_empty() {
+        sender_email.clone()
+    } else {
+        sender_name
+    };
 
     Ok(CachedEmailRecord {
         id: row.get::<_, i64>(0)?.to_string(),
         folder_id: row.get(1)?,
         from: CachedContact {
-            id: row.get::<_, String>(4)?,
-            name: row.get(3)?,
-            email: row.get(4)?,
+            id: sender_email.clone(),
+            name: normalized_sender_name,
+            email: sender_email,
             avatar: None,
         },
         to: serde_json::from_str(&recipients_to).unwrap_or_default(),
         cc: Some(serde_json::from_str(&recipients_cc).unwrap_or_default()),
         bcc: Some(Vec::new()),
-        subject: subject.clone(),
+        subject: normalized_subject.clone(),
         body: body_html,
-        snippet: row.get(8)?,
+        snippet,
         date: row.get(7)?,
         read: row.get::<_, i64>(13)? != 0,
         starred: row.get::<_, i64>(14)? != 0,
@@ -740,7 +756,7 @@ fn map_cached_email_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CachedEmail
         crypto_info: None,
         headers: serde_json::from_str(&headers_json).unwrap_or_else(|_| {
             serde_json::json!({
-                "messageId": format!("<cached-{}>", subject)
+                "messageId": format!("<cached-{}>", normalized_subject)
             })
         }),
     })

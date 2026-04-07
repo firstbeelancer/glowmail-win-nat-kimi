@@ -45,6 +45,48 @@ function decodeMime(str: string): string {
   });
 }
 
+function ensureDisplayString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => ensureDisplayString(item))
+      .filter(Boolean)
+      .join(', ');
+  }
+  return '';
+}
+
+function normalizeDisplayText(value: unknown, fallback = ''): string {
+  const raw = ensureDisplayString(value).trim();
+  if (!raw) return fallback;
+  const decoded = decodeMime(raw).trim();
+  return decoded || fallback;
+}
+
+function normalizeEmailContact(contact: any, fallbackName = '(Unknown)') {
+  const email = ensureDisplayString(contact?.email).trim();
+  const preferredName = contact?.name ?? email ?? fallbackName;
+  const name = normalizeDisplayText(preferredName, email || fallbackName);
+
+  return {
+    id: email || name,
+    name: name || email || fallbackName,
+    email,
+  };
+}
+
+function hasMeaningfulContact(contact: any) {
+  if (!contact) return false;
+  const name = ensureDisplayString(contact.name).trim();
+  const email = ensureDisplayString(contact.email).trim();
+  return Boolean(name || email);
+}
+
+function hasMeaningfulText(value: unknown) {
+  return ensureDisplayString(value).trim().length > 0;
+}
+
 /** Decode IMAP modified UTF-7 folder names (e.g., &BCEEPwQwBDw- → Спам) */
 function decodeModifiedUtf7(str: string): string {
   if (!str || !str.includes('&')) return str;
@@ -446,8 +488,14 @@ export function MailProvider({ children }: { children: ReactNode }) {
     const emails = (data.emails || [])
       .filter((msg: any) => msg.uid)
       .map((msg: any) => {
+        const from = normalizeEmailContact(msg.from, '(Unknown)');
+        const to = (msg.to || []).map((a: any) => normalizeEmailContact(a, a?.email || ''));
+        const cc = (msg.cc || []).map((a: any) => normalizeEmailContact(a, a?.email || ''));
+        const subject = normalizeDisplayText(msg.subject, '(No Subject)');
+        const snippet = normalizeDisplayText(msg.preview ?? msg.snippet ?? '', '');
+
         // Debug: log problematic messages
-        if (!msg.subject || !msg.from?.name) {
+        if (!hasMeaningfulText(msg.subject) || !hasMeaningfulContact(msg.from)) {
           console.log('[mapMessages Debug] Message with missing data:', {
             uid: msg.uid,
             subject: msg.subject,
@@ -461,15 +509,11 @@ export function MailProvider({ children }: { children: ReactNode }) {
         return {
           id: String(msg.uid),
           folderId: folder,
-          from: { 
-            id: msg.from?.email || '', 
-            name: decodeMime(msg.from?.name || msg.from?.email || '(Unknown)'), 
-            email: msg.from?.email || '' 
-          },
-          to: (msg.to || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name || ''), email: a.email })),
-          cc: (msg.cc || []).map((a: any) => ({ id: a.email, name: decodeMime(a.name || ''), email: a.email })),
-          subject: decodeMime(msg.subject || '(No Subject)'),
-          snippet: decodeMime(msg.preview || msg.snippet || ''),
+          from,
+          to,
+          cc,
+          subject,
+          snippet,
           body: '',
           date: msg.date || new Date().toISOString(),
           read: (msg.flags || []).some((f: string) => f === '\\Seen' || f === 'Seen'),
@@ -525,16 +569,27 @@ export function MailProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const upsertLocalEmail = useCallback((email: Email) => {
+    const normalizedEmail: Email = {
+      ...email,
+      from: normalizeEmailContact(email.from, '(Unknown)'),
+      to: (email.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+      cc: (email.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+      bcc: (email.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+      subject: normalizeDisplayText(email.subject, '(No Subject)'),
+      snippet: normalizeDisplayText(email.snippet, ''),
+      body: ensureDisplayString(email.body),
+    };
+
     updateBothEmailStates((prev) => {
-      const existingIndex = prev.findIndex((item) => item.id === email.id);
+      const existingIndex = prev.findIndex((item) => item.id === normalizedEmail.id);
       if (existingIndex === -1) {
-        return [email, ...prev];
+        return [normalizedEmail, ...prev];
       }
 
       const next = [...prev];
       next[existingIndex] = {
         ...next[existingIndex],
-        ...email,
+        ...normalizedEmail,
       };
       return next;
     });
@@ -547,20 +602,36 @@ export function MailProvider({ children }: { children: ReactNode }) {
       const cached = preservedMap.get(email.id);
       if (!cached) return email;
 
+      const incomingFrom = normalizeEmailContact(email.from, '(Unknown)');
+      const cachedFrom = normalizeEmailContact(cached.from, '(Unknown)');
+      const incomingSubject = normalizeDisplayText(email.subject, '(No Subject)');
+      const cachedSubject = normalizeDisplayText(cached.subject, '(No Subject)');
+      const incomingSnippet = normalizeDisplayText(email.snippet, '');
+      const cachedSnippet = normalizeDisplayText(cached.snippet, '');
+      const incomingBody = ensureDisplayString(email.body);
+      const cachedBody = ensureDisplayString(cached.body);
+      const incomingHeaders = email.headers && Object.keys(email.headers).length > 0 ? email.headers : {};
+      const cachedHeaders = cached.headers && Object.keys(cached.headers).length > 0 ? cached.headers : {};
+
       return {
         ...email,
-        from: cached.from?.email || cached.from?.name ? cached.from : email.from,
-        to: email.to.length > 0 ? email.to : cached.to,
-        cc: (email.cc && email.cc.length > 0) ? email.cc : cached.cc,
-        bcc: (email.bcc && email.bcc.length > 0) ? email.bcc : cached.bcc,
-        snippet: email.snippet || cached.snippet,
-        body: cached.body || email.body,
-        read: cached.read || email.read,
-        starred: cached.starred || email.starred,
+        from: hasMeaningfulContact(email.from) ? incomingFrom : cachedFrom,
+        to: email.to.length > 0 ? email.to.map((contact) => normalizeEmailContact(contact, contact?.email || '')) : (cached.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+        cc: (email.cc && email.cc.length > 0)
+          ? email.cc.map((contact) => normalizeEmailContact(contact, contact?.email || ''))
+          : (cached.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+        bcc: (email.bcc && email.bcc.length > 0)
+          ? email.bcc.map((contact) => normalizeEmailContact(contact, contact?.email || ''))
+          : (cached.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+        subject: hasMeaningfulText(email.subject) ? incomingSubject : cachedSubject,
+        snippet: incomingSnippet || cachedSnippet,
+        body: incomingBody || cachedBody,
+        read: email.read,
+        starred: email.starred,
         tags: cached.tags.length > 0 ? cached.tags : email.tags,
         attachments: cached.attachments.length > 0 ? cached.attachments : email.attachments,
         cryptoInfo: cached.cryptoInfo || email.cryptoInfo,
-        headers: Object.keys(cached.headers || {}).length > 0 ? cached.headers : email.headers,
+        headers: Object.keys(incomingHeaders).length > 0 ? incomingHeaders : cachedHeaders,
       };
     });
   }, []);
@@ -599,7 +670,19 @@ export function MailProvider({ children }: { children: ReactNode }) {
 
     const cachePromise = desktopCache
       .getCachedFolderEmails(accountEmail, folderPath, limit, offset)
-      .then((emails) => ({ emails, completed: true }))
+      .then((emails) => ({
+        emails: emails.map((email) => ({
+          ...email,
+          from: normalizeEmailContact(email.from, '(Unknown)'),
+          to: (email.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+          cc: (email.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+          bcc: (email.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+          subject: normalizeDisplayText(email.subject, '(No Subject)'),
+          snippet: normalizeDisplayText(email.snippet, ''),
+          body: ensureDisplayString(email.body),
+        })),
+        completed: true,
+      }))
       .catch(() => ({ emails: [], completed: true }));
 
     const timeoutPromise = new Promise<{ emails: Email[]; completed: boolean }>((resolve) => {
@@ -960,6 +1043,16 @@ export function MailProvider({ children }: { children: ReactNode }) {
       if (isDesktopCacheReady) {
         cachedEmailsPromise = desktopCache
           .getCachedFolderEmails(accountEmail, currentFolder, PAGE_SIZE, 0)
+          .then((emails) => emails.map((email) => ({
+            ...email,
+            from: normalizeEmailContact(email.from, '(Unknown)'),
+            to: (email.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            cc: (email.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            bcc: (email.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            subject: normalizeDisplayText(email.subject, '(No Subject)'),
+            snippet: normalizeDisplayText(email.snippet, ''),
+            body: ensureDisplayString(email.body),
+          })))
           .catch(() => []);
         const quickCache = await readCachedFolderEmailsWithTimeout(accountEmail, currentFolder, PAGE_SIZE, 0);
         cachedEmails = quickCache.emails;
@@ -1109,7 +1202,16 @@ export function MailProvider({ children }: { children: ReactNode }) {
             SEARCH_PAGE_SIZE,
             (nextPage - 1) * SEARCH_PAGE_SIZE,
           );
-          mapped = cached.emails;
+          mapped = cached.emails.map((email) => ({
+            ...email,
+            from: normalizeEmailContact(email.from, '(Unknown)'),
+            to: (email.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            cc: (email.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            bcc: (email.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            subject: normalizeDisplayText(email.subject, '(No Subject)'),
+            snippet: normalizeDisplayText(email.snippet, ''),
+            body: ensureDisplayString(email.body),
+          }));
           total = cached.total;
           hasMore = cached.hasMore;
         } else {
@@ -1222,7 +1324,16 @@ export function MailProvider({ children }: { children: ReactNode }) {
             SEARCH_PAGE_SIZE,
             0,
           );
-          mapped = cached.emails;
+          mapped = cached.emails.map((email) => ({
+            ...email,
+            from: normalizeEmailContact(email.from, '(Unknown)'),
+            to: (email.to || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            cc: (email.cc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            bcc: (email.bcc || []).map((contact) => normalizeEmailContact(contact, contact?.email || '')),
+            subject: normalizeDisplayText(email.subject, '(No Subject)'),
+            snippet: normalizeDisplayText(email.snippet, ''),
+            body: ensureDisplayString(email.body),
+          }));
           total = cached.total;
           hasMore = cached.hasMore;
         } else {

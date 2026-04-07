@@ -1,4 +1,5 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use encoding_rs::Encoding;
 use imap::types::Flag;
 use lettre::message::{
     header::{InReplyTo, References},
@@ -821,6 +822,7 @@ fn append_message(session: &mut ImapSession, request: &ImapRequest) -> Result<Va
 fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
     let headers = parse_header_map(fetch.header().unwrap_or(&[]));
     let envelope = fetch.envelope();
+    let (has_attachments, attachments) = infer_attachment_summary_from_headers(&headers);
 
     let from = envelope
         .and_then(|env| env.from.as_ref().or(env.sender.as_ref()))
@@ -890,6 +892,22 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         .unwrap_or_default();
 
     let references = headers.get("references").cloned().unwrap_or_default();
+    let snippet = headers
+        .get("x-alt-snippet")
+        .cloned()
+        .or_else(|| {
+            let from_name = if from.name.trim().is_empty() {
+                from.email.trim()
+            } else {
+                from.name.trim()
+            };
+            if from_name.is_empty() {
+                None
+            } else {
+                Some(format!("From {}", from_name))
+            }
+        })
+        .unwrap_or_else(|| subject.clone());
 
     Ok(json!({
         "uid": fetch.uid.unwrap_or_default(),
@@ -897,11 +915,11 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         "to": to,
         "cc": cc,
         "subject": subject,
-        "snippet": "",
+        "snippet": snippet,
         "date": date,
         "flags": fetch.flags().iter().map(flag_to_string).collect::<Vec<_>>(),
-        "hasAttachments": false,
-        "attachments": [],
+        "hasAttachments": has_attachments,
+        "attachments": attachments,
         "messageId": message_id,
         "inReplyTo": in_reply_to,
         "references": references,
@@ -1169,6 +1187,8 @@ fn parse_fetch_header_summaries(response: &[u8]) -> Result<Vec<Value>, String> {
 
 fn map_raw_header_summary(prefix: &str, header: &[u8]) -> Result<Value, String> {
     let parsed = mailparse::parse_headers(header).map_err(err_to_string)?.0;
+    let header_map = parse_header_map(header);
+    let (has_attachments, attachments) = infer_attachment_summary_from_headers(&header_map);
     let uid = extract_numeric_attr(prefix, "UID").unwrap_or_default();
     let from = parse_single_address(
         &decode_rfc2047(parsed.get_first_value("From").as_deref().unwrap_or(""))
@@ -1192,6 +1212,13 @@ fn map_raw_header_summary(prefix: &str, header: &[u8]) -> Result<Value, String> 
     let in_reply_to = parsed.get_first_value("In-Reply-To").unwrap_or_default();
     let references = parsed.get_first_value("References").unwrap_or_default();
     let flags = extract_flags(prefix);
+    let snippet = if !subject.trim().is_empty() {
+        subject.clone()
+    } else if !from.name.trim().is_empty() {
+        format!("From {}", from.name)
+    } else {
+        String::new()
+    };
 
     Ok(json!({
         "uid": uid,
@@ -1199,11 +1226,11 @@ fn map_raw_header_summary(prefix: &str, header: &[u8]) -> Result<Value, String> 
         "to": to,
         "cc": cc,
         "subject": subject.clone(),
-        "snippet": "",
+        "snippet": snippet,
         "date": date,
         "flags": flags,
-        "hasAttachments": false,
-        "attachments": [],
+        "hasAttachments": has_attachments,
+        "attachments": attachments,
         "messageId": message_id,
         "inReplyTo": in_reply_to,
         "references": references,
@@ -1281,7 +1308,7 @@ fn decode_rfc2047(input: &str) -> String {
             "B" => {
                 // Base64
                 match STANDARD.decode(data.as_bytes()) {
-                    Ok(bytes) => String::from_utf8_lossy(&bytes).to_string(),
+                    Ok(bytes) => decode_bytes_with_charset(&bytes, charset),
                     Err(_) => data.to_string(),
                 }
             }
@@ -1303,7 +1330,7 @@ fn decode_rfc2047(input: &str) -> String {
                         _ => buf.push(b),
                     }
                 }
-                String::from_utf8_lossy(&buf).to_string()
+                decode_bytes_with_charset(&buf, charset)
             }
             _ => data.to_string(),
         };
@@ -1311,6 +1338,83 @@ fn decode_rfc2047(input: &str) -> String {
     }
     result.push_str(remaining);
     result
+}
+
+fn decode_bytes_with_charset(bytes: &[u8], charset: &str) -> String {
+    if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
+        let (decoded, _, _) = encoding.decode(bytes);
+        decoded.into_owned()
+    } else {
+        String::from_utf8_lossy(bytes).to_string()
+    }
+}
+
+fn infer_attachment_summary_from_headers(
+    headers: &std::collections::HashMap<String, String>,
+) -> (bool, Vec<Value>) {
+    let content_type = headers
+        .get("content-type")
+        .cloned()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let content_disposition = headers
+        .get("content-disposition")
+        .cloned()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    let has_attachments = content_type.contains("multipart/mixed")
+        || content_type.contains("multipart/related")
+        || content_type.contains("name=")
+        || content_disposition.contains("attachment")
+        || content_disposition.contains("filename=");
+
+    if !has_attachments {
+        return (false, Vec::new());
+    }
+
+    let inferred_name = extract_filename_from_header(headers)
+        .unwrap_or_else(|| "attachment".to_string());
+
+    (
+        true,
+        vec![json!({
+            "name": inferred_name,
+            "size": 0,
+            "type": "application/octet-stream",
+        })],
+    )
+}
+
+fn extract_filename_from_header(
+    headers: &std::collections::HashMap<String, String>,
+) -> Option<String> {
+    let candidates = [
+        headers.get("content-disposition"),
+        headers.get("content-type"),
+    ];
+
+    for candidate in candidates.into_iter().flatten() {
+        for marker in ["filename=", "name="] {
+            if let Some(position) = candidate.to_ascii_lowercase().find(marker) {
+                let raw = candidate[position + marker.len()..]
+                    .trim()
+                    .trim_start_matches('"')
+                    .split(';')
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .trim_matches('"')
+                    .trim();
+
+                if !raw.is_empty() {
+                    return Some(decode_rfc2047(raw));
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn map_imap_address(address: &imap_proto::types::Address<'_>) -> Address {
