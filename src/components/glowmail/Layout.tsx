@@ -349,10 +349,12 @@ function SidebarContent({
   onCompose?: (prefill?: { to?: string }) => void;
   lang: 'en' | 'ru';
 }) {
-  const { fetchEmails, addFolder, emails, contacts, addContact, moveEmailToFolder, settings: mailSettings, totalEmails } = useMail();
+  const { fetchEmails, addFolder, emails, contacts, addContact, moveEmailToFolder, settings: mailSettings, totalEmails, hasMoreEmails } = useMail();
   const folderColors = mailSettings.folderColors || {};
   const currentFolderEmails = emails.filter(e => e.folderId === currentFolder);
-  const displayedTotal = totalEmails > 0 ? totalEmails : currentFolderEmails.length;
+  const loadedCount = currentFolderEmails.length;
+  const displayedTotal = totalEmails > 0 ? totalEmails : loadedCount;
+  const showExactTotal = totalEmails > 0 && loadedCount < totalEmails;
   const [isFetching, setIsFetching] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ INBOX: true });
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
@@ -476,7 +478,7 @@ function SidebarContent({
         <div className="px-3 py-2 mb-1 flex items-center gap-2">
           <Mail className="w-3.5 h-3.5" style={{ color: '#87FFD9' }} />
           <span className="text-xs font-extrabold tracking-wide" style={{ color: '#87FFD9' }}>
-            {displayedTotal} {lang === 'ru' ? 'писем' : 'emails'}
+            {showExactTotal ? `${loadedCount} / ${displayedTotal}` : displayedTotal} {lang === 'ru' ? 'писем' : 'emails'}
           </span>
         </div>
         

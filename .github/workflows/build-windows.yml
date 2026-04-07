@@ -1,0 +1,55 @@
+name: Build GlowMail for Windows
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_BACKEND_PROVIDER: native
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build Tauri app
+        run: tauri build
+        env:
+          VITE_BACKEND_PROVIDER: native
+
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: glowmail-windows-msi
+          path: src-tauri/target/release/bundle/msi/*.msi
+        continue-on-error: true
+
+      - name: Upload NSIS installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: glowmail-windows-exe
+          path: src-tauri/target/release/bundle/nsis/*.exe
+        continue-on-error: true

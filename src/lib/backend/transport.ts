@@ -18,11 +18,12 @@ function isDesktopTauriRuntime(): boolean {
 function readConfiguredProvider(): BackendProvider {
   const configured = import.meta.env.VITE_BACKEND_PROVIDER;
 
-  if (configured === "native" || configured === "supabase") {
-    return configured;
+  if (configured === "supabase") {
+    return "supabase";
   }
 
-  return "supabase";
+  // Default to native for Tauri desktop builds
+  return "native";
 }
 
 export function getBackendProvider(): BackendProvider {

@@ -391,7 +391,7 @@ fn list_emails(session: &mut ImapSession, request: &ImapRequest) -> Result<Value
         .clone()
         .unwrap_or_else(|| "INBOX".to_string());
     let page = request.page.unwrap_or(1).max(1);
-    let page_size = request.page_size.unwrap_or(50).max(1);
+    let page_size = request.page_size.unwrap_or(20).max(1).min(50);
 
     let mailbox = session.select(&folder).map_err(err_to_string)?;
     let total = mailbox.exists;
@@ -448,7 +448,7 @@ fn list_emails(session: &mut ImapSession, request: &ImapRequest) -> Result<Value
         "total": total,
         "page": page,
         "pageSize": page_size,
-        "hasMore": start > 1,
+        "hasMore": (page as u32) * page_size < total,
         "diagnostics": {
             "source": "imap-session",
             "bytesTransferred": estimated_bytes,
@@ -464,7 +464,7 @@ fn raw_list_emails(client: &mut RawImapClient, request: &ImapRequest) -> Result<
         .clone()
         .unwrap_or_else(|| "INBOX".to_string());
     let page = request.page.unwrap_or(1).max(1) as usize;
-    let page_size = request.page_size.unwrap_or(50).max(1) as usize;
+    let page_size = request.page_size.unwrap_or(20).max(1).min(50) as usize;
 
     client.select(&folder)?;
     let all_uids = client.uid_search_all()?;
@@ -497,7 +497,7 @@ fn raw_list_emails(client: &mut RawImapClient, request: &ImapRequest) -> Result<
         "total": total,
         "page": page,
         "pageSize": page_size,
-        "hasMore": offset + selected_uids.len() < total,
+        "hasMore": offset + page_size < total,
         "diagnostics": {
             "source": "imap-raw",
             "bytesTransferred": transferred_bytes,
@@ -782,10 +782,15 @@ fn map_list_message(fetch: &imap::types::Fetch<'_>) -> Result<Value, String> {
         cc
     };
 
-    let subject = envelope
+    let envelope_subject = envelope
         .and_then(|env| env.subject.as_ref().map(decode_imap_bytes))
-        .filter(|value| !value.trim().is_empty())
-        .or_else(|| headers.get("subject").cloned())
+        .filter(|value| !value.trim().is_empty());
+    let header_subject = headers
+        .get("subject")
+        .cloned()
+        .filter(|value| !value.trim().is_empty());
+    let subject = envelope_subject
+        .or(header_subject)
         .unwrap_or_else(|| "(No Subject)".to_string());
 
     let date = envelope

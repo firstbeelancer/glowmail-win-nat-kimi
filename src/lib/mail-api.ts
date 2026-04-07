@@ -42,7 +42,7 @@ export async function fetchFolders() {
   return data.folders || [];
 }
 
-export async function fetchEmailList(folder = "INBOX", page = 1, pageSize = 50) {
+export async function fetchEmailList(folder = "INBOX", page = 1, pageSize = 20) {
   const data = await callImap("list", { folder, page, pageSize });
   return data;
 }

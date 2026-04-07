@@ -561,7 +561,7 @@ export function MailProvider({ children }: { children: ReactNode }) {
     folderPath: string,
     limit: number,
     offset = 0,
-    timeoutMs = 150,
+    timeoutMs = 300,
   ): Promise<{ emails: Email[]; completed: boolean }> => {
     if (!isDesktopCacheReady) {
       return { emails: [], completed: true };
@@ -579,10 +579,10 @@ export function MailProvider({ children }: { children: ReactNode }) {
     return Promise.race([cachePromise, timeoutPromise]);
   }, [isDesktopCacheReady]);
 
-  const PAGE_SIZE = 50;
-  const SEARCH_PAGE_SIZE = 30;
-  const BACKGROUND_SYNC_PAGE_LIMIT = 3;
-  const BACKGROUND_SYNC_FOLDER_LIMIT = 3;
+  const PAGE_SIZE = 20;
+  const SEARCH_PAGE_SIZE = 20;
+  const BACKGROUND_SYNC_PAGE_LIMIT = 1;
+  const BACKGROUND_SYNC_FOLDER_LIMIT = 1;
 
   const notifyNewEmails = useCallback((newEmails: Email[]) => {
     if (newEmails.length === 0) return;
@@ -898,7 +898,8 @@ export function MailProvider({ children }: { children: ReactNode }) {
         setFolders(topLevel);
         if (isDesktopCacheReady) {
           desktopCache.cacheFolders(accountEmail, flat).catch(console.error);
-          runBackgroundFolderQueue(flat).catch(console.error);
+          // Skip background folder queue on startup to prevent UI freeze
+          // runBackgroundFolderQueue(flat).catch(console.error);
         }
       }
     } catch (e) {
@@ -1070,7 +1071,10 @@ export function MailProvider({ children }: { children: ReactNode }) {
       });
       if (isDesktopCacheReady) {
         desktopCache.cacheEmails(accountEmail, currentFolder, mapped).catch(console.error);
-        syncFolderPagesToCache(currentFolder, total, 2).catch(console.error);
+        // Only background-sync remaining pages if total > loaded, start from page 2
+        if (total > PAGE_SIZE) {
+          syncFolderPagesToCache(currentFolder, total, 2).catch(console.error);
+        }
       }
     } catch (e: any) {
       console.error('fetchEmails error:', e);
