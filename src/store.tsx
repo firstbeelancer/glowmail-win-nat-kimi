@@ -9,17 +9,36 @@ import { toast } from '@/hooks/use-toast';
 /** Decode RFC 2047 MIME-encoded words (=?charset?encoding?text?=) */
 function decodeMime(str: string): string {
   if (!str) return str;
-  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_, charset, encoding, text) => {
+  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_match, charset, encoding, text) => {
     try {
       if (encoding.toUpperCase() === 'B') {
+        // Base64 encoding
         const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0));
         return new TextDecoder(charset).decode(bytes);
       } else {
-        // Q encoding
-        const decoded = text
-          .replace(/_/g, ' ')
-          .replace(/=([0-9A-Fa-f]{2})/g, (_: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
-        const bytes = Uint8Array.from(decoded, (c: string) => c.charCodeAt(0));
+        // Q encoding: collect raw bytes, then decode as UTF-8
+        const rawBytes: number[] = [];
+        let i = 0;
+        while (i < text.length) {
+          if (text[i] === '_') {
+            rawBytes.push(0x20); // underscore = space
+            i++;
+          } else if (text[i] === '=' && i + 2 < text.length) {
+            const hex = text.substring(i + 1, i + 3);
+            const byte = parseInt(hex, 16);
+            if (!isNaN(byte)) {
+              rawBytes.push(byte);
+              i += 3;
+            } else {
+              rawBytes.push(text.charCodeAt(i));
+              i++;
+            }
+          } else {
+            rawBytes.push(text.charCodeAt(i));
+            i++;
+          }
+        }
+        const bytes = new Uint8Array(rawBytes);
         return new TextDecoder(charset).decode(bytes);
       }
     } catch { return text; }

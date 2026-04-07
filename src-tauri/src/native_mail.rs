@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::cmp::Ordering;
 use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
 #[derive(Deserialize)]
@@ -34,6 +34,7 @@ struct ImapRequest {
     raw_message: Option<String>,
     flags: Option<Vec<String>>,
     attachment_index: Option<usize>,
+    query: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -126,6 +127,22 @@ fn handle_imap(payload: Value) -> Result<Value, String> {
         });
     }
 
+    // Non-connecting actions (search returns empty — frontend uses local FTS cache)
+    if request.action == "search" {
+        return Ok(json!({
+            "emails": [],
+            "total": 0,
+            "hasMore": false,
+        }));
+    }
+
+    if request.action == "reindex-search-cache" {
+        return Ok(json!({
+            "processed": 0,
+            "nextCursor": null,
+        }));
+    }
+
     let mut session = connect_session(
         &request.host,
         request.port,
@@ -191,15 +208,32 @@ fn handle_smtp(payload: Value) -> Result<Value, String> {
     Ok(json!({ "success": true }))
 }
 
+fn connect_with_timeout(host: &str, port: u16) -> Result<native_tls::TlsStream<TcpStream>, String> {
+    let addr = (host, port)
+        .to_socket_addrs()
+        .map_err(err_to_string)?
+        .next()
+        .ok_or_else(|| "No address resolved".to_string())?;
+    let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(15))
+        .map_err(err_to_string)?;
+    tcp.set_read_timeout(Some(Duration::from_secs(30)))
+        .map_err(err_to_string)?;
+    tcp.set_write_timeout(Some(Duration::from_secs(15)))
+        .map_err(err_to_string)?;
+
+    let connector = native_tls::TlsConnector::new().map_err(err_to_string)?;
+    connector.connect(host, tcp).map_err(err_to_string)
+}
+
 fn connect_session(
     host: &str,
     port: u16,
     username: &str,
     password: &str,
 ) -> Result<ImapSession, String> {
-    let client = imap::ClientBuilder::new(host, port)
-        .connect()
-        .map_err(err_to_string)?;
+    let tls_stream = connect_with_timeout(host, port)?;
+    let mut client = imap::Client::new(tls_stream);
+    client.read_greeting().map_err(err_to_string)?;
 
     client
         .login(username, password)
@@ -797,10 +831,16 @@ struct RawImapClient {
 
 impl RawImapClient {
     fn connect(host: &str, port: u16, username: &str, password: &str) -> Result<Self, String> {
-        let tcp = TcpStream::connect((host, port)).map_err(err_to_string)?;
-        tcp.set_read_timeout(Some(Duration::from_secs(15)))
+        let addr = (host, port)
+            .to_socket_addrs()
+            .map_err(err_to_string)?
+            .next()
+            .ok_or_else(|| "No address resolved".to_string())?;
+        let tcp = TcpStream::connect_timeout(&addr, Duration::from_secs(15))
             .map_err(err_to_string)?;
-        tcp.set_write_timeout(Some(Duration::from_secs(10)))
+        tcp.set_read_timeout(Some(Duration::from_secs(30)))
+            .map_err(err_to_string)?;
+        tcp.set_write_timeout(Some(Duration::from_secs(15)))
             .map_err(err_to_string)?;
 
         let connector = TlsConnector::new().map_err(err_to_string)?;
